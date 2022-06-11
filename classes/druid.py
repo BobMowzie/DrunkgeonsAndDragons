@@ -64,13 +64,15 @@ class Bite(AbilityBase):
   
   @classmethod
   def abilityDescription(cls):
-    return "Basic attack. Deals bonus damage every 3 turns."
+    return "Basic attack that deals 1 damage. Deals 3 damage if you are not targeted by any player this turn."
 
   def damageEffect(self):
-    bonusDamage = 0
-    if self.caster.game.turns % 3 == 0:
-      bonusDamage = 2
-    self.caster.dealDamage(self.targets[0], 2 + bonusDamage)
+    bonusDamage = 2
+    for action in self.caster.game.actions.values():
+      if action and self.caster in action.targets:
+        bonusDamage = 0
+        break
+    self.caster.dealDamage(self.targets[0], 1 + bonusDamage)
 
   def canUse(self):
     return len(self.targets) == 1 and self.targets[0] != self.caster

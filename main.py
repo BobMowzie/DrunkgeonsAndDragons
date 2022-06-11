@@ -52,7 +52,7 @@ async def debugGame():
 @bot.event
 async def on_ready():
   print('Logged in as {0}'.format(bot.user))
-  await debugGame()
+  # await debugGame()
 
 @bot.command()
 async def newGame(ctx):

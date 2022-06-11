@@ -41,7 +41,7 @@ class Game:
     #
     #await self.enterAction(list(self.players.keys())[1], 2, [list(self.players.keys())[0]])
     #
-    await asyncio.sleep(60)
+    await asyncio.sleep(90)
     self.takingCommands = False
     if not self.running:
       return

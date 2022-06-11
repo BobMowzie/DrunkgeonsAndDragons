@@ -39,11 +39,11 @@ class Cure(AbilityBase):
 
   @classmethod
   def abilityName(cls):
-    return "Cure"
+    return "Cleanse"
 
   @classmethod
   def abilityDescription(cls):
-    return "Clear all status effects from a target and prevent the target from receiving any new status effects this turn. Each effect cured grants one blessing to the Cleric."
+    return "Clear all status effects (harmful and beneficial) from a target and prevent the target from receiving any new status effects this turn. Each effect cured grants one blessing to the Cleric."
 
   def startTurnEffect(self):
     target = self.targets[0]

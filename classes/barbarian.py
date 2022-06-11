@@ -50,7 +50,7 @@ class Strike(AbilityBase):
 
     @classmethod
     def abilityDescription(cls):
-        return "Basic attack. Gets stronger with consecutive hits on an opponent."
+        return "Basic attack for 1 damage. Gets stronger by 1 damage with consecutive hits on an opponent, dealing a maximum of 3 damage."
 
     def damageEffect(self):
         target = self.targets[0]

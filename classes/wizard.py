@@ -17,7 +17,7 @@ class Wizard(PlayerBase):
   
   @classmethod
   def classDescription(cls):
-    return "Offensive but fragile class that charges up power by skipping turns and unleashes it in powerful spells. Power resets to 1 if they take damage."
+    return "Offensive but fragile class that charges up power by skipping turns and unleashes it in powerful spells. Power decreases by 1 if they take damage. Power cannot go below 1."
 
   @classmethod
   def ability1(self):
@@ -30,12 +30,10 @@ class Wizard(PlayerBase):
   def skipTurn(self):
     if self.damageTakenThisTurn == 0:
       self.power += 2
-    else:
-      self.power = 1
 
   def endTurn(self):
-    if self.damageTakenThisTurn > 0:
-      self.power = 1
+    if self.damageTakenThisTurn > 0 and self.power > 1:
+      self.power -= 1
     PlayerBase.endTurn(self)
 
   def resourceNumber(self):
