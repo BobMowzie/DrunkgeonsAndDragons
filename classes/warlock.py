@@ -2,90 +2,86 @@ from playerBase import PlayerBase
 from abilityBase import AbilityBase
 from effectBase import EffectBase
 
-class Wizard(PlayerBase):
+class Warlock(PlayerBase):
   def __init__(self, user, game):
     PlayerBase.__init__(self, user, game)
-    self.power = 1
+    self.soulboundEffect
 
   @classmethod
   def className(cls):
-    return 'Wizard'
+    return 'Warlock'
 
   @classmethod
   def classEmoji(cls):
-    return '🪄'
+    return '💀'
   
   @classmethod
   def classDescription(cls):
-    return "Offensive but fragile class that charges up power by skipping turns and unleashes it in powerful spells. Power decreases by 1 if they take damage. Power cannot go below 1."
+    return "Warlocks are a high-risk high-reward offensive class. They sacrifice their own health to deal damage."
 
   @classmethod
   def ability1(self):
-    return Fireball
+    return EldrichBlast
 
   @classmethod
   def ability2(self):
-    return Incinerate
-
-  def skipTurn(self):
-    if self.damageTakenThisTurn == 0:
-      self.power += 2
-
-  def endTurn(self):
-    if self.damageTakenThisTurn > 0 and self.power > 1:
-      self.power -= 1
-    PlayerBase.endTurn(self)
-
-  def resourceNumber(self):
-    return self.power
+    return Soulbind
+    
+  def addDamageSource(self, amount, damager, source=None):
+  	if not instanceof(source, SoulboundEffect):
+  		if self.soulboundEffect:
+  			target = self.soulboundEffect.target
+  			if self.soulboundEffect in target.activeEffects:
+  				target.addDamageSource(amount, self, self.soulboundEffect)
+  	PlayerBase.addDamageSource(self, amount, damager, source)
 
 #######################################
 # Abilities
 #######################################
-class Fireball(AbilityBase):
+class EldritchBlast(AbilityBase):
   def __init__(self, caster: Wizard, targets):
     AbilityBase.__init__(self, caster, targets)
   
   @classmethod
   def abilityName(cls):
-    return "Fireball"
+    return "Eldritch Blast"
   
   @classmethod
   def abilityDescription(cls):
-    return 'Spend all your power to deal that much damage to a target.'
+    return 'Deal 3 damage to a target and 1 damage to yourself.'
 
   def damageEffect(self):
     target = self.targets[0]
-    self.caster.dealDamage(target, self.caster.power)
-    self.caster.power = 1
+    self.caster.dealDamage(target, 3)
+    self.caster.dealDamage(self.caster, 1)
 
   def canUse(self):
     return len(self.targets) == 1 and self.targets[0] != self.caster
 
-class Incinerate(AbilityBase):
+class Soulbind(AbilityBase):
   def __init__(self, caster: Wizard, targets):
     AbilityBase.__init__(self, caster, targets)
 
   @classmethod
   def abilityName(cls):
-    return "Incinerate"
+    return "Soulbind"
   
   @classmethod
   def abilityDescription(cls):
-    return 'Spend all your power to burn your target for that many turns.'
+    return 'Bind your soul to a target for 3 turns. Whenever you take damage, they take damage too.'
   
   def applyEffects(self):
-    target = self.targets[0]   
-    target.addEffect(BurnEffect(self.caster, target, self.caster.power))
-    self.caster.power = 1
-
+    self.caster.soulboundEffect = SoulboundEffect(self.caster, target, 3)
+    target = self.targets[0]
+    target.addEffect(self.caster.soulboundEffect)
+    
   def canUse(self):
     return len(self.targets) == 1 and self.targets[0] != self.caster
 
 #######################################
 # Effects
 #######################################
-class BurnEffect(EffectBase):
+class SoulboundEffect(EffectBase):
   def __init__(self, caster, target, turnsRemaining):
     EffectBase.__init__(self, caster, target, turnsRemaining)
 
@@ -94,8 +90,8 @@ class BurnEffect(EffectBase):
 
   @classmethod
   def effectName(cls):
-    return "Burn"
+    return "Soulbound"
 
   @classmethod
   def effectEmoji(self):
-    return '🔥'
+    return '👻'

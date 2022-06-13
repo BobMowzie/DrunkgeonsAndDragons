@@ -66,19 +66,21 @@ class PlayerBase(ABC):
   def preDamagePhase(self):
     pass
 
-  def dealDamage(self, target, amount):
+  def dealDamage(self, target, amount, source=None):
     amount = amount * self.attackMultiplier
-
-    from classes.paladin import ShieldEffect
-    blockingPaladins = [effect.caster for effect in target.activeEffects if isinstance(effect, ShieldEffect)]
+    target.addDamageSource(amount, self, source)
+      
+  def addDamageSource(self, amount, damager, source=None):
+  	from classes.paladin import ShieldEffect
+    blockingPaladins = [effect.caster for effect in self.activeEffects if isinstance(effect, ShieldEffect)]
     if len(blockingPaladins) > 0:
       blockedAmount = math.floor(amount / 2)
       for paladin in blockingPaladins:
-        paladin.damageTaken.append((self, blockedAmount))
+        paladin.damageTaken.append((damager, blockedAmount))
         if amount > paladin.biggestAttack:
           paladin.biggestAttack = amount
     else:
-      target.damageTaken.append((self, amount))
+      self.damageTaken.append((damager, amount))
 
   def modifyDamage(self):
     self.damageTaken.sort(key=lambda x:x[1])
