@@ -1,4 +1,5 @@
-from abc import ABC, abstractmethod
+from abc import abstractmethod
+from gameevents import *
 import math
 
 
@@ -9,10 +10,11 @@ def toSub(x):
     return x.translate(res)
 
 
-class PlayerBase(ABC):
+class PlayerBase(EventSubscriber):
     """A player character class"""
 
     def __init__(self, user, game):
+        super().__init__()
         self.user = user
         self.game = game
         self.team = None
@@ -23,10 +25,15 @@ class PlayerBase(ABC):
         self.takeDamageMultiplier = 1
         self.takeDamageReduction = 0
         self.activeEffects = []
+        self.activeAbility = None
         self.alive = True
         self.curingClerics = []
         self.damageTaken = []  # List of (source player, amount) tuples
         self.damageDealt = {}  # Dict mapping target player to amount
+
+        self.subscribeEvent(PhaseStartTurns, self.startTurn, -100)
+        self.subscribeEvent(PhaseTakeDamage, self.takeDamage, 100)
+        self.subscribeEvent(PhaseEndTurns, self.endTurn, 100)
 
     @classmethod
     @abstractmethod
@@ -50,9 +57,6 @@ class PlayerBase(ABC):
 
     def doAbility(self, abilityClass, target):
         return abilityClass(self, target)
-
-    def skipTurn(self):
-        pass
 
     def startTurn(self):
         self.activeEffects = [effect for effect in self.activeEffects if effect.turnsRemaining > 0]
@@ -118,6 +122,7 @@ class PlayerBase(ABC):
                 self.alive = False
 
     def endTurn(self):
+        self.activeAbility = None
         self.damageTakenLastTurn = self.damageTakenThisTurn
         self.damageTakenThisTurn = 0
         self.attackMultiplier = 1

@@ -1,36 +1,21 @@
-from abc import ABC
+from gameevents import EventSubscriber
 
-class EffectBase(ABC):
-  """A status effect base class"""
-  def __init__(self, caster, target, turnsRemaining):
-    self.caster = caster
-    if caster:
-      self.game = caster.game
-    self.target = target
-    self.turnsRemaining = turnsRemaining
 
-  def startTurnEffect(self):
-    pass
+class EffectBase(EventSubscriber):
+    """A status effect base class"""
 
-  def modifyActions(self):
-    pass
+    def __init__(self, caster, target, turnsRemaining):
+        super().__init__()
+        self.caster = caster
+        if caster:
+            self.game = caster.game
+        self.target = target
+        self.turnsRemaining = turnsRemaining
 
-  def applyEffects(self):
-    pass
+    @classmethod
+    def effectName(cls):
+        return ''
 
-  def preDamageEffect(self):
-    pass
-
-  def damageEffect(self):
-    pass
-
-  def postEffect(self):
-    pass
-
-  @classmethod
-  def effectName(cls):
-    return ''
-
-  @classmethod
-  def effectEmoji(self):
-    return ''
+    @classmethod
+    def effectEmoji(cls):
+        return ''

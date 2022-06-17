@@ -1,6 +1,7 @@
 from playerBase import PlayerBase
 from abilityBase import AbilityBase
 from effectBase import EffectBase
+from gameevents import *
 
 
 class Barbarian(PlayerBase):
@@ -8,6 +9,8 @@ class Barbarian(PlayerBase):
         PlayerBase.__init__(self, user, game)
         self.previousTarget = None
         self.consecutiveDamageBonus = 0
+
+        self.subscribeEvent(PhaseStartTurns, self.startTurn, 0)
 
     @classmethod
     def className(cls):
@@ -22,16 +25,17 @@ class Barbarian(PlayerBase):
         return "Bruiser and bully class. Purely offensive."
 
     @classmethod
-    def ability1(self):
+    def ability1(cls):
         return Strike
 
     @classmethod
-    def ability2(self):
+    def ability2(cls):
         return Enrage
 
-    def skipTurn(self):
-        self.previousTarget = None
-        self.consecutiveDamageBonus = 0
+    def startTurn(self):
+        if not self.activeAbility:
+            self.previousTarget = None
+            self.consecutiveDamageBonus = 0
 
     def resourceNumber(self):
         return self.consecutiveDamageBonus
@@ -43,6 +47,9 @@ class Barbarian(PlayerBase):
 class Strike(AbilityBase):
     def __init__(self, caster: Barbarian, targets):
         AbilityBase.__init__(self, caster, targets)
+
+        self.subscribeEvent(PhaseDealDamage, self.damageEffect(), 0)
+        self.subscribeEvent(PhasePostDamage, self.postEffect(), 0)
 
     @classmethod
     def abilityName(cls):
@@ -78,6 +85,8 @@ class Enrage(AbilityBase):
         AbilityBase.__init__(self, caster, targets)
         self.targets = [self.caster]
 
+        self.subscribeEvent(PhasePostDamage, self.postEffect(), 0)
+
     @classmethod
     def abilityName(cls):
         return "Enrage"
@@ -101,12 +110,14 @@ class EnrageEffect(EffectBase):
     def __init__(self, caster, target, turnsRemaining):
         EffectBase.__init__(self, caster, target, turnsRemaining)
 
+        self.subscribeEvent(PhaseApplyEffects, self.applyEffects(), 0)
+
     @classmethod
     def effectName(cls):
         return "Enrage"
 
     @classmethod
-    def effectEmoji(self):
+    def effectEmoji(cls):
         return '💢'
 
     def applyEffects(self):

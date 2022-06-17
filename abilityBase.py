@@ -1,37 +1,22 @@
-from abc import ABC
+from gameevents import EventSubscriber
 
-class AbilityBase(ABC):
-  """A player ability base class"""
-  def __init__(self, caster, targets):
-    self.caster = caster
-    self.game = caster.game
-    self.targets = targets
 
-  def startTurnEffect(self):
-    pass
+class AbilityBase(EventSubscriber):
+    """A player ability base class"""
 
-  def modifyActions(self):
-    pass
+    def __init__(self, caster, targets):
+        super().__init__()
+        self.caster = caster
+        self.game = caster.game
+        self.targets = targets
 
-  def applyEffects(self):
-    pass
+    def canUse(self):
+        True
 
-  def preDamageEffect(self):
-    pass
+    @classmethod
+    def abilityName(cls):
+        return ''
 
-  def damageEffect(self):
-    pass
-
-  def postEffect(self):
-    pass
-
-  def canUse(self):
-    True
-
-  @classmethod
-  def abilityName(cls):
-    return ''
-
-  @classmethod
-  def abilityDescription(cls):
-    return ''
+    @classmethod
+    def abilityDescription(cls):
+        return ''
