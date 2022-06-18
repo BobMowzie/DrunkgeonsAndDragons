@@ -45,14 +45,14 @@ async def debugGame():
   bobmowzieUser = guild.get_member(301435749729828867)
   caesicCultistUser = guild.get_member(747871773282009420)
   game = await doNewGame(channel)
-  await doAddPlayer(game, bobmowzieUser, classNames['Druid'])
-  await doAddPlayer(game, caesicCultistUser, classNames['Knight'])
+  await doAddPlayer(game, bobmowzieUser, classNames['Barbarian'])
+  await doAddPlayer(game, caesicCultistUser, classNames['Wizard'])
   await doStartGame(game)
 
 @bot.event
 async def on_ready():
   print('Logged in as {0}'.format(bot.user))
-  # await debugGame()
+  await debugGame()
 
 @bot.command()
 async def newGame(ctx):

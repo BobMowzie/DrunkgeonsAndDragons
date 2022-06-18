@@ -179,7 +179,7 @@ class BearEffect(EffectBase):
     return '🐻'
 
   def applyEffects(self):
-    self.target.takeDamageReduction = 1
+    self.target.takeDamageAddition = 1
 
 class MoonlitEffect(EffectBase):
   def __init__(self, caster, target, turnsRemaining):
@@ -194,7 +194,7 @@ class MoonlitEffect(EffectBase):
     return '🌙'
 
   def applyEffects(self):
-    self.target.attackMultiplier *= 2
+    self.target.dealDamageMultiplier *= 2
 
 class EntangledEffect(EffectBase):
   def __init__(self, caster, target, turnsRemaining):

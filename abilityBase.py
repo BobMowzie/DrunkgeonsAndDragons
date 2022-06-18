@@ -1,4 +1,4 @@
-from gameevents import EventSubscriber
+from gameEvents import EventSubscriber
 
 
 class AbilityBase(EventSubscriber):
@@ -11,7 +11,7 @@ class AbilityBase(EventSubscriber):
         self.targets = targets
 
     def canUse(self):
-        True
+        return True
 
     @classmethod
     def abilityName(cls):

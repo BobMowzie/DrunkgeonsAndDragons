@@ -1,7 +1,7 @@
 from playerBase import PlayerBase
 from abilityBase import AbilityBase
 from effectBase import EffectBase
-from gameevents import *
+from gameEvents import *
 
 
 class Barbarian(PlayerBase):
@@ -10,7 +10,7 @@ class Barbarian(PlayerBase):
         self.previousTarget = None
         self.consecutiveDamageBonus = 0
 
-        self.subscribeEvent(PhaseStartTurns, self.startTurn, 0)
+        self.subscribeEvent(PhaseStartTurns, self.startTurnEvent, 0)
 
     @classmethod
     def className(cls):
@@ -32,7 +32,7 @@ class Barbarian(PlayerBase):
     def ability2(cls):
         return Enrage
 
-    def startTurn(self):
+    def startTurnEvent(self, event):
         if not self.activeAbility:
             self.previousTarget = None
             self.consecutiveDamageBonus = 0
@@ -48,8 +48,8 @@ class Strike(AbilityBase):
     def __init__(self, caster: Barbarian, targets):
         AbilityBase.__init__(self, caster, targets)
 
-        self.subscribeEvent(PhaseDealDamage, self.damageEffect(), 0)
-        self.subscribeEvent(PhasePostDamage, self.postEffect(), 0)
+        self.subscribeEvent(PhaseDealDamage, self.damageEffect, 0)
+        self.subscribeEvent(PhasePostDamage, self.postEffect, 0)
 
     @classmethod
     def abilityName(cls):
@@ -59,21 +59,26 @@ class Strike(AbilityBase):
     def abilityDescription(cls):
         return "Basic attack for 1 damage. Gets stronger by 1 damage with consecutive hits on an opponent, dealing a maximum of 3 damage."
 
-    def damageEffect(self):
+    def damageEffect(self, event):
         target = self.targets[0]
 
         if self.caster.previousTarget != target:
             self.caster.previousTarget = target
             self.caster.consecutiveDamageBonus = 0
 
-        self.caster.dealDamage(target, 1 + self.caster.consecutiveDamageBonus)
+        self.caster.dealDamage(target, 1 + self.caster.consecutiveDamageBonus, self)
 
-    def postEffect(self):
-        damageDealt = self.caster.damageDealt.get(self.caster.previousTarget)
-        if damageDealt and damageDealt > 0:
-            self.caster.consecutiveDamageBonus = min(
-                self.caster.consecutiveDamageBonus + 1, 2)
+    def postEffect(self, event):
+        consecutiveHit = False
+        for damageInstance in self.caster.previousTarget.damageTaken:
+            if damageInstance.attacker == self and damageInstance.amount > 0 and not damageInstance.canceled:
+                consecutiveHit = True
+                break
+
+        if consecutiveHit:
+            self.caster.consecutiveDamageBonus = min(self.caster.consecutiveDamageBonus + 1, 2)
         else:
+            self.caster.consecutiveDamageBonus = 0
             self.caster.previousTarget = None
 
     def canUse(self):
@@ -85,7 +90,7 @@ class Enrage(AbilityBase):
         AbilityBase.__init__(self, caster, targets)
         self.targets = [self.caster]
 
-        self.subscribeEvent(PhasePostDamage, self.postEffect(), 0)
+        self.subscribeEvent(PhasePostDamage, self.postEffect, 0)
 
     @classmethod
     def abilityName(cls):
@@ -95,7 +100,7 @@ class Enrage(AbilityBase):
     def abilityDescription(cls):
         return "Deal double damage for the following 3 turns. Using this will not reset consecutive target hits."
 
-    def postEffect(self):
+    def postEffect(self, event):
         self.targets[0].removeEffect(EnrageEffect)
         self.targets[0].addEffect(EnrageEffect(self.caster, self.caster, 4))
 
@@ -110,7 +115,7 @@ class EnrageEffect(EffectBase):
     def __init__(self, caster, target, turnsRemaining):
         EffectBase.__init__(self, caster, target, turnsRemaining)
 
-        self.subscribeEvent(PhaseApplyEffects, self.applyEffects(), 0)
+        self.subscribeEvent(PhaseApplyEffects, self.applyEffects, 0)
 
     @classmethod
     def effectName(cls):
@@ -120,5 +125,5 @@ class EnrageEffect(EffectBase):
     def effectEmoji(cls):
         return '💢'
 
-    def applyEffects(self):
-        self.target.attackMultiplier *= 2
+    def applyEffects(self, event):
+        self.target.dealDamageMultiplier *= 2

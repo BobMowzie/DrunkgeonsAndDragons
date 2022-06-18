@@ -1,5 +1,7 @@
 from abc import abstractmethod
-from gameevents import *
+
+from damageInstance import DamageInstance
+from gameEvents import *
 import math
 
 
@@ -21,19 +23,23 @@ class PlayerBase(EventSubscriber):
         self.health = 15
         self.damageTakenThisTurn = 0
         self.damageTakenLastTurn = 0
-        self.attackMultiplier = 1
+
+        self.dealDamageMultiplier = 1
+        self.dealDamageAddition = 0
         self.takeDamageMultiplier = 1
-        self.takeDamageReduction = 0
+        self.takeDamageAddition = 0
+
         self.activeEffects = []
         self.activeAbility = None
         self.alive = True
         self.curingClerics = []
-        self.damageTaken = []  # List of (source player, amount) tuples
-        self.damageDealt = {}  # Dict mapping target player to amount
+        self.damageTaken = []  # List of DamageInstances
+        self.damageDealt = []  # List of DamageInstances
 
         self.subscribeEvent(PhaseStartTurns, self.startTurn, -100)
+        self.subscribeEvent(EventDealDamage, self.adjustDealDamage, 50)
+        self.subscribeEvent(EventTakeDamage, self.adjustTakeDamage, 50)
         self.subscribeEvent(PhaseTakeDamage, self.takeDamage, 100)
-        self.subscribeEvent(PhaseEndTurns, self.endTurn, 100)
 
     @classmethod
     @abstractmethod
@@ -58,7 +64,7 @@ class PlayerBase(EventSubscriber):
     def doAbility(self, abilityClass, target):
         return abilityClass(self, target)
 
-    def startTurn(self):
+    def startTurn(self, event):
         self.activeEffects = [effect for effect in self.activeEffects if effect.turnsRemaining > 0]
 
     def modifyActions(self):
@@ -70,24 +76,19 @@ class PlayerBase(EventSubscriber):
                 cleric.blessings += len(self.activeEffects)
             self.activeEffects.clear()
 
-    def preDamagePhase(self):
-        pass
+    def adjustDealDamage(self, event):
+        event.damageInstance.amount = max(0, event.damageInstance.amount + self.dealDamageAddition)
+        event.damageInstance.amount = math.floor(event.damageInstance.amount * self.dealDamageMultiplier)
 
     def dealDamage(self, target, amount, source=None):
-        amount = amount * self.attackMultiplier
-        target.addDamageSource(amount, self, source)
+        damageInstance = DamageInstance(self, target, amount, source)
+        self.damageDealt.append(damageInstance)
+        event = EventDealDamage(damageInstance)
+        self.game.doEvent(event)
 
-    def addDamageSource(self, amount, damager, source=None):
-        from classes.paladin import ShieldEffect
-        blockingPaladins = [effect.caster for effect in self.activeEffects if isinstance(effect, ShieldEffect)]
-        if len(blockingPaladins) > 0:
-            blockedAmount = math.floor(amount / 2)
-            for paladin in blockingPaladins:
-                paladin.damageTaken.append((damager, blockedAmount))
-                if amount > paladin.biggestAttack:
-                    paladin.biggestAttack = amount
-        else:
-            self.damageTaken.append((damager, amount))
+        if not damageInstance.canceled:
+            target = damageInstance.target
+            target.damageTaken.append(damageInstance)
 
     def modifyDamage(self):
         self.damageTaken.sort(key=lambda x: x[1])
@@ -107,27 +108,30 @@ class PlayerBase(EventSubscriber):
             if len(divineBarriers) > 0:
                 self.damageTaken[i] = (source, 0)
 
-    def takeDamage(self):
-        for player, amount in self.damageTaken:
-            amount = max(0, amount - self.takeDamageReduction)
-            amount = math.floor(amount * self.takeDamageMultiplier)
-            self.health -= amount
-            self.damageTakenThisTurn += amount
-            if player.damageDealt.get(self):
-                player.damageDealt[self] += amount
-            else:
-                player.damageDealt[self] = amount
-            if self.health <= 0:
-                self.health = 0
-                self.alive = False
+    def adjustTakeDamage(self, event):
+        event.damageInstance.amount = max(0, event.damageInstance.amount + self.takeDamageAddition)
+        event.damageInstance.amount = math.floor(event.damageInstance.amount * self.takeDamageMultiplier)
 
-    def endTurn(self):
+    def takeDamage(self, event):
+        for damageInstance in self.damageTaken:
+            event = EventTakeDamage(damageInstance)
+            self.game.doEvent(event)
+
+            if not damageInstance.canceled:
+                amount = event.damageInstance.amount
+                self.health -= amount
+                self.damageTakenThisTurn += amount
+                if self.health <= 0:
+                    self.health = 0
+                    self.alive = False
+
+    def resetPlayer(self):
         self.activeAbility = None
         self.damageTakenLastTurn = self.damageTakenThisTurn
         self.damageTakenThisTurn = 0
-        self.attackMultiplier = 1
+        self.dealDamageMultiplier = 1
         self.takeDamageMultiplier = 1
-        self.takeDamageReduction = 0
+        self.takeDamageAddition = 0
         for effect in self.activeEffects:
             effect.turnsRemaining = max(effect.turnsRemaining - 1, 0)
         self.curingClerics.clear()

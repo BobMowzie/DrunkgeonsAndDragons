@@ -1,4 +1,4 @@
-from gameevents import EventSubscriber
+from gameEvents import EventSubscriber
 
 
 class EffectBase(EventSubscriber):

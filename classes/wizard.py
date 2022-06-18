@@ -1,7 +1,7 @@
 from playerBase import PlayerBase
 from abilityBase import AbilityBase
 from effectBase import EffectBase
-from gameevents import *
+from gameEvents import *
 
 
 class Wizard(PlayerBase):
@@ -9,8 +9,8 @@ class Wizard(PlayerBase):
         PlayerBase.__init__(self, user, game)
         self.power = 1
 
-        self.subscribeEvent(PhaseStartTurns, self.startTurn, 0)
-        self.subscribeEvent(PhaseEndTurns, self.endTurn, 0)
+        self.subscribeEvent(PhaseStartTurns, self.startTurnEvent, 0)
+        self.subscribeEvent(PhaseEndTurns, self.endTurnEvent, 0)
 
     @classmethod
     def className(cls):
@@ -33,15 +33,14 @@ class Wizard(PlayerBase):
     def ability2(cls):
         return Incinerate
 
-    def startTurn(self):
+    def startTurnEvent(self, event):
         if not self.activeAbility:
             if self.damageTakenThisTurn == 0:
                 self.power += 2
 
-    def endTurn(self):
+    def endTurnEvent(self, event):
         if self.damageTakenThisTurn > 0 and self.power > 1:
             self.power -= 1
-        PlayerBase.endTurn(self)
 
     def resourceNumber(self):
         return self.power
@@ -64,9 +63,9 @@ class Fireball(AbilityBase):
     def abilityDescription(cls):
         return 'Spend all your power to deal that much damage to a target.'
 
-    def damageEffect(self):
+    def damageEffect(self, event):
         target = self.targets[0]
-        self.caster.dealDamage(target, self.caster.power)
+        self.caster.dealDamage(target, self.caster.power, self)
         self.caster.power = 1
 
     def canUse(self):
@@ -87,7 +86,7 @@ class Incinerate(AbilityBase):
     def abilityDescription(cls):
         return 'Spend all your power to burn your target for that many turns.'
 
-    def applyEffects(self):
+    def applyEffects(self, event):
         target = self.targets[0]
         target.addEffect(BurnEffect(self.caster, target, self.caster.power))
         self.caster.power = 1
@@ -105,8 +104,8 @@ class BurnEffect(EffectBase):
 
         self.subscribeEvent(PhaseDealDamage, self.damageEffect, 0)
 
-    def damageEffect(self):
-        self.caster.dealDamage(self.target, 1)
+    def damageEffect(self, event):
+        self.caster.dealDamage(self.target, 1, self)
 
     @classmethod
     def effectName(cls):

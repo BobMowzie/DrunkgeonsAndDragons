@@ -1,6 +1,8 @@
 import asyncio
+import itertools
+
 from playerBase import classEmojis
-from gameevents import *
+from gameEvents import *
 
 
 class Game:
@@ -42,7 +44,7 @@ class Game:
         #
         # await self.enterAction(list(self.players.keys())[1], 2, [list(self.players.keys())[0]])
         #
-        await asyncio.sleep(90)
+        await asyncio.sleep(10)
         self.takingCommands = False
         if not self.running:
             return
@@ -69,6 +71,8 @@ class Game:
             await self.channel.send(list(self.players.values())[0].toString() + "**wins!**")
             await self.endGame()
             return
+        for player in self.players.values():
+            player.resetPlayer()
 
     async def addPlayer(self, user, _class):
         if not self.running:
@@ -112,15 +116,30 @@ class Game:
     def doEvent(self, event):
         players = list(self.players.values())
         abilities = [player.activeAbility for player in players if player.activeAbility]
-        effects = [effect for effect in (player.activeEffects for player in players)]
-        subscribers = players + abilities + effects
+        effects = []
+        for player in players:
+            effects.extend(player.activeEffects)
 
         subscriptions = []
-        for subscriber in subscribers:
+        for subscriber in itertools.chain(players, abilities, effects):
             subscriptions.extend([sub for sub in subscriber.subscribedEvents if sub.eventClass == type(event)])
 
-        subscriptions.sort(key=lambda sub: sub.order)
+        # Run all event subscriptions in order. If two subscriptions have the same order, sort them by subscriber type.
+        # This way, all effects and abilities of the same type will trigger at once.
+        subscriptions.sort(key=lambda sub: (sub.order, type(sub.subscriber)))
+        prevSubClass = None
         for sub in subscriptions:
+            # Check if this iteration is between subscriber types
+            subClass = type(sub.subscriber)
+            if subClass != prevSubClass:
+                event.betweenSubscriberTypes()
+                prevSubClass = subClass
+
+            # Stop the event if it was canceled
+            if event.canceled:
+                break
+
+            # Otherwise, do the subscribed function
             sub.function(event)
 
     async def printActions(self):
