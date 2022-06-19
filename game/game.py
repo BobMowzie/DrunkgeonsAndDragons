@@ -2,8 +2,7 @@ import asyncio
 import itertools
 
 from base.playerBase import classEmojis
-from gameEvents import *
-
+from game.gameEvents import *
 
 class Game:
     """A running instance of the game"""
@@ -17,7 +16,7 @@ class Game:
 
     async def newGame(self):
         await self.channel.send("Created game")
-        classMessage = "Type .join followed by a class emoji to join!"
+        classMessage = "Type .join followed by a class name or emoji to join!"
         for emoji, _class in classEmojis.items():
             classMessage += '\n'
             classMessage += emoji + ': ' + _class.className()

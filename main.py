@@ -45,7 +45,7 @@ async def debugGame():
   bobmowzieUser = guild.get_member(301435749729828867)
   caesicCultistUser = guild.get_member(747871773282009420)
   game = await doNewGame(channel)
-  await doAddPlayer(game, bobmowzieUser, classNames['Barbarian'])
+  await doAddPlayer(game, bobmowzieUser, classNames['Paladin'])
   await doAddPlayer(game, caesicCultistUser, classNames['Wizard'])
   await doStartGame(game)
 

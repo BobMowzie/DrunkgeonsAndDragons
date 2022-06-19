@@ -11,6 +11,7 @@ class Paladin(PlayerBase):
         self.biggestAttackLastTurn = 0
 
         self.subscribeEvent(EventTakeDamage, self.takeDamageEvent, 50)
+        self.subscribeEvent(PhaseEndTurns, self.endTurn, 0)
 
     @classmethod
     def className(cls):
@@ -36,11 +37,11 @@ class Paladin(PlayerBase):
         return 1 + self.biggestAttackLastTurn
 
     def takeDamageEvent(self, event):
-        if event.target == self:
-            if event.amount > self.biggestAttack:
-                self.biggestAttack = event.amount
+        if event.damageInstance.target == self:
+            if event.damageInstance.amount > self.biggestAttack:
+                self.biggestAttack = event.damageInstance.amount
 
-    def endTurn(self):
+    def endTurn(self, event):
         self.biggestAttackLastTurn = self.biggestAttack
         self.biggestAttack = 0
 
