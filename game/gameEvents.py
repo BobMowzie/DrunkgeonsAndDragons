@@ -1,7 +1,8 @@
 from abc import ABC
 
 class Event(ABC):
-	def __init__(self):
+	def __init__(self, game):
+		self.game = game
 		self.newCanceled = False
 		self.canceled = False
 	"""
@@ -16,14 +17,16 @@ class PhaseStartTurns(Event):
 	pass
 
 class PhaseModifyActions(Event):
-	pass
+	def betweenSubscriberTypes(self):
+		for player in self.game.getPlayers():
+			player.activeAbility = player.modifiedActiveAbility
 
 class PhaseApplyEffects(Event):
 	pass
 
 class EventApplyEffect(Event):
-	def __init__(self, effect):
-		super().__init__()
+	def __init__(self, effect, game):
+		super().__init__(game)
 		self.caster = effect.caster
 		self.target = effect.target
 		self.effect = effect
@@ -35,8 +38,8 @@ class PhaseDealDamage(Event):
 	pass
 
 class EventDealDamage(Event):
-	def __init__(self, damageInstance):
-		super().__init__()
+	def __init__(self, damageInstance, game):
+		super().__init__(game)
 		self.damageInstance = damageInstance
 
 	def betweenSubscriberTypes(self):
@@ -47,8 +50,8 @@ class PhaseTakeDamage(Event):
 	pass
 
 class EventTakeDamage(Event):
-	def __init__(self, damageInstance):
-		super().__init__()
+	def __init__(self, damageInstance, game):
+		super().__init__(game)
 		self.damageInstance = damageInstance
 
 	def betweenSubscriberTypes(self):

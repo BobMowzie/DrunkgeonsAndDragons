@@ -50,19 +50,19 @@ class Game:
         await self.channel.send("\* \* \* \* \* \* \* \* \* \* \* \*")
 
         phases = [
-            PhaseStartTurns(),
-            PhaseModifyActions(),
-            PhaseApplyEffects(),
-            PhasePreDamage(),
-            PhaseDealDamage(),
-            PhaseTakeDamage(),
-            PhasePostDamage(),
-            PhaseEndTurns()
+            PhaseStartTurns(self),
+            PhaseModifyActions(self),
+            PhaseApplyEffects(self),
+            PhasePreDamage(self),
+            PhaseDealDamage(self),
+            PhaseTakeDamage(self),
+            PhasePostDamage(self),
+            PhaseEndTurns(self)
         ]
         for phase in phases:
             self.doEvent(phase)
 
-        for player in self.players.values():
+        for player in self.getPlayers():
             player.resetPlayer()
 
         await self.printActions()
@@ -101,6 +101,7 @@ class Game:
             ability = player.doAbility(abilityClass, targetPlayers)
             if ability.canUse():
                 player.activeAbility = ability
+                player.modifiedActiveAbility = ability
                 await self.channel.send(player.toString() + " entered their action")
             else:
                 await self.channel.send(player.toString() + " Invalid targets for ability")
@@ -114,7 +115,7 @@ class Game:
             await self.channel.send(player.toString() + " entered their action")
 
     def doEvent(self, event):
-        players = list(self.players.values())
+        players = self.getPlayers()
         abilities = [player.activeAbility for player in players if player.activeAbility]
         effects = []
         for player in players:
@@ -144,7 +145,7 @@ class Game:
         event.betweenSubscriberTypes()
 
     async def printActions(self):
-        for player in self.players.values():
+        for player in self.getPlayers():
             ability = player.abilityLastTurn
             if ability:
                 targetsString = ", ".join([target.toString() for target in ability.targets])
@@ -159,3 +160,6 @@ class Game:
             if doDrinks:
                 playerString += " drink " + str(player.damageTakenLastTurn)
             await self.channel.send(playerString)
+
+    def getPlayers(self):
+        return list(self.players.values())

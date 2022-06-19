@@ -31,6 +31,7 @@ class PlayerBase(EventSubscriber):
 
         self.activeEffects = []
         self.activeAbility = None
+        self.modifiedActiveAbility = None
         self.abilityLastTurn = None
         self.alive = True
         self.curingClerics = []
@@ -75,30 +76,12 @@ class PlayerBase(EventSubscriber):
     def dealDamage(self, target, amount, source=None):
         damageInstance = DamageInstance(self, target, amount, source)
         self.damageDealt.append(damageInstance)
-        event = EventDealDamage(damageInstance)
+        event = EventDealDamage(damageInstance, self.game)
         self.game.doEvent(event)
 
         if not damageInstance.canceled:
             target = damageInstance.target
             target.damageTaken.append(damageInstance)
-
-    def modifyDamage(self):
-        self.damageTaken.sort(key=lambda x: x[1])
-
-        from classes.cleric import DivineBarrierEffect
-        largestBlockedSoFar = 0
-        divineBarriers = [effect for effect in self.activeEffects if
-                          isinstance(effect, DivineBarrierEffect) and effect.turnsRemaining > 0]
-        for i in range(len(self.damageTaken)):
-            source = self.damageTaken[i][0]
-            amount = self.damageTaken[i][1]
-            if amount > largestBlockedSoFar:
-                largestBlockedSoFar = amount
-                for dBarrier in divineBarriers:
-                    dBarrier.turnsRemaining -= 1
-                    divineBarriers = [barrier for barrier in divineBarriers if barrier.turnsRemaining >= 0]
-            if len(divineBarriers) > 0:
-                self.damageTaken[i] = (source, 0)
 
     def adjustTakeDamage(self, event):
         event.damageInstance.newAmount = max(0, event.damageInstance.amount + self.takeDamageAddition)
@@ -107,7 +90,7 @@ class PlayerBase(EventSubscriber):
     def takeDamage(self, event):
         self.damageTaken.sort(key=lambda di: di.amount)
         for damageInstance in self.damageTaken:
-            event = EventTakeDamage(damageInstance)
+            event = EventTakeDamage(damageInstance, self.game)
             self.game.doEvent(event)
 
             if not damageInstance.canceled:
@@ -156,7 +139,7 @@ class PlayerBase(EventSubscriber):
         self.activeEffects = [effect for effect in self.activeEffects if not isinstance(effect, effectType)]
 
     def addEffect(self, effect):
-        event = EventApplyEffect(effect)
+        event = EventApplyEffect(effect, self.game)
         self.game.doEvent(event)
 
         if not event.canceled:
