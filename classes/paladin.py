@@ -19,7 +19,7 @@ class Paladin(PlayerBase):
 
     @classmethod
     def classDescription(cls):
-        return 'Tank class. Turns defense into offense.'
+        return 'Tank class. Turns defense into offense by blocking incoming damage, then turning it on opponents.'
 
     @classmethod
     def ability1(cls):

@@ -2,6 +2,7 @@ from abc import ABC
 
 class Event(ABC):
 	def __init__(self):
+		self.newCanceled = False
 		self.canceled = False
 	"""
 	Called in between executing the subscription for different subscriber types.
@@ -9,7 +10,7 @@ class Event(ABC):
 	will get called to update the damage instances.
 	"""
 	def betweenSubscriberTypes(self):
-		pass
+		self.canceled = self.newCanceled
 
 class PhaseStartTurns(Event):
 	pass
@@ -21,11 +22,10 @@ class PhaseApplyEffects(Event):
 	pass
 
 class EventApplyEffect(Event):
-	def __init__(self, caster, target, effect):
+	def __init__(self, effect):
 		super().__init__()
-		self.caster = caster
-		self.originalTarget = target
-		self.target = target
+		self.caster = effect.caster
+		self.target = effect.target
 		self.effect = effect
 
 class PhasePreDamage(Event):
@@ -41,7 +41,7 @@ class EventDealDamage(Event):
 
 	def betweenSubscriberTypes(self):
 		self.damageInstance.update()
-		self.canceled = self.damageInstance.canceled
+		self.canceled = self.newCanceled or self.damageInstance.canceled
 
 class PhaseTakeDamage(Event):
 	pass
@@ -53,7 +53,7 @@ class EventTakeDamage(Event):
 
 	def betweenSubscriberTypes(self):
 		self.damageInstance.update()
-		self.canceled = self.damageInstance.canceled
+		self.canceled = self.newCanceled or self.damageInstance.canceled
 
 class PhasePostDamage(Event):
 	pass

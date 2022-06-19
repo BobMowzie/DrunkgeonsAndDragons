@@ -19,3 +19,6 @@ class EffectBase(EventSubscriber):
     @classmethod
     def effectEmoji(cls):
         return ''
+
+    def decrementTurnsRemaining(self):
+        self.turnsRemaining = max(self.turnsRemaining - 1, 0)

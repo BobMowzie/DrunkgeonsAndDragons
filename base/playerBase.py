@@ -68,15 +68,6 @@ class PlayerBase(EventSubscriber):
     def startTurn(self, event):
         self.activeEffects = [effect for effect in self.activeEffects if effect.turnsRemaining > 0]
 
-    def modifyActions(self):
-        pass
-
-    def applyEffects(self):
-        if len(self.curingClerics) > 0:
-            for cleric in self.curingClerics:
-                cleric.blessings += len(self.activeEffects)
-            self.activeEffects.clear()
-
     def adjustDealDamage(self, event):
         event.damageInstance.newAmount = max(0, event.damageInstance.amount + self.dealDamageAddition)
         event.damageInstance.newAmount = math.floor(event.damageInstance.amount * self.dealDamageMultiplier)
@@ -114,6 +105,7 @@ class PlayerBase(EventSubscriber):
         event.damageInstance.newAmount = math.floor(event.damageInstance.amount * self.takeDamageMultiplier)
 
     def takeDamage(self, event):
+        self.damageTaken.sort(key=lambda di: di.amount)
         for damageInstance in self.damageTaken:
             event = EventTakeDamage(damageInstance)
             self.game.doEvent(event)
@@ -135,7 +127,7 @@ class PlayerBase(EventSubscriber):
         self.takeDamageMultiplier = 1
         self.takeDamageAddition = 0
         for effect in self.activeEffects:
-            effect.turnsRemaining = max(effect.turnsRemaining - 1, 0)
+            effect.decrementTurnsRemaining()
         self.curingClerics.clear()
         self.damageTaken.clear()
         self.damageDealt.clear()
@@ -159,11 +151,11 @@ class PlayerBase(EventSubscriber):
         self.activeEffects = [effect for effect in self.activeEffects if not isinstance(effect, effectType)]
 
     def addEffect(self, effect):
-        if len(self.curingClerics) > 0:
-            for cleric in self.curingClerics:
-                cleric.blessings += 1
-            return
-        self.activeEffects.append(effect)
+        event = EventApplyEffect(effect)
+        self.game.doEvent(event)
+
+        if not event.canceled:
+            self.activeEffects.append(effect)
 
     def toString(self):
         toReturn = self.classEmoji()
