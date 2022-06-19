@@ -1,7 +1,7 @@
-from playerBase import PlayerBase
-from abilityBase import AbilityBase
-from effectBase import EffectBase
-from gameEvents import *
+from base.playerBase import PlayerBase
+from base.abilityBase import AbilityBase
+from base.effectBase import EffectBase
+from game.gameEvents import *
 
 
 class Wizard(PlayerBase):

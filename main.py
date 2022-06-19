@@ -1,8 +1,8 @@
 import os
 import discord
 from discord.ext import commands
-from game import Game
-from playerBase import classEmojis, classNames
+from game.game import Game
+from base.playerBase import classEmojis, classNames
 
 intents = discord.Intents.default()
 intents.members = True

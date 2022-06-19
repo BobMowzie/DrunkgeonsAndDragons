@@ -1,7 +1,7 @@
 from abc import abstractmethod
 
-from damageInstance import DamageInstance
-from gameEvents import *
+from game.damageInstance import DamageInstance
+from game.gameEvents import *
 import math
 
 

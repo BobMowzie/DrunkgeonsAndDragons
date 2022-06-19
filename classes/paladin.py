@@ -1,7 +1,7 @@
-from playerBase import PlayerBase
-from abilityBase import AbilityBase
+from base.playerBase import PlayerBase
+from base.abilityBase import AbilityBase
 import math
-from gameEvents import *
+from game.gameEvents import *
 
 
 class Paladin(PlayerBase):

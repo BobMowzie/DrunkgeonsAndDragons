@@ -1,7 +1,7 @@
 import asyncio
 import itertools
 
-from playerBase import classEmojis
+from base.playerBase import classEmojis
 from gameEvents import *
 
 

@@ -1,6 +1,6 @@
-from playerBase import PlayerBase
-from abilityBase import AbilityBase
-from effectBase import EffectBase
+from base.playerBase import PlayerBase
+from base.abilityBase import AbilityBase
+from base.effectBase import EffectBase
 
 
 class Cleric(PlayerBase):
