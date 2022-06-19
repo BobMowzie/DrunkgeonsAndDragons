@@ -10,7 +10,7 @@ class Paladin(PlayerBase):
         self.biggestAttack = 0
         self.biggestAttackLastTurn = 0
 
-        self.subscribeEvent(EventTakeDamage, self.takeDamageEvent, 90)
+        self.subscribeEvent(EventTakeDamage, self.takeDamageEvent, 50)
 
     @classmethod
     def className(cls):
@@ -53,7 +53,7 @@ class Shield(AbilityBase):
         AbilityBase.__init__(self, caster, targets)
 
         self.subscribeEvent(EventDealDamage, self.dealDamageEvent, -99)
-        self.subscribeEvent(EventTakeDamage, self.takeDamageEvent, 91)
+        self.subscribeEvent(EventTakeDamage, self.takeDamageEvent, 51)
 
     @classmethod
     def abilityName(cls):
@@ -86,6 +86,8 @@ class Retribution(AbilityBase):
     def __init__(self, caster: Paladin, targets):
         AbilityBase.__init__(self, caster, targets)
 
+        self.subscribeEvent(PhaseDealDamage, self.damageEffect, 0)
+
     @classmethod
     def abilityName(cls):
         return "Retribution"
@@ -94,7 +96,7 @@ class Retribution(AbilityBase):
     def abilityDescription(cls):
         return "Deal damage to a target equal to the largest single hit of damage you took or blocked last turn, plus 1."
 
-    def damageEffect(self):
+    def damageEffect(self, event):
         target = self.targets[0]
         self.caster.dealDamage(target, self.caster.biggestAttackLastTurn + 1, self)
 

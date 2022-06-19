@@ -9,7 +9,6 @@ class Wizard(PlayerBase):
         PlayerBase.__init__(self, user, game)
         self.power = 1
 
-        self.subscribeEvent(PhaseStartTurns, self.startTurnEvent, 0)
         self.subscribeEvent(PhaseEndTurns, self.endTurnEvent, 0)
 
     @classmethod
@@ -33,12 +32,10 @@ class Wizard(PlayerBase):
     def ability2(cls):
         return Incinerate
 
-    def startTurnEvent(self, event):
+    def endTurnEvent(self, event):
         if not self.activeAbility:
             if self.damageTakenThisTurn == 0:
                 self.power += 2
-
-    def endTurnEvent(self, event):
         if self.damageTakenThisTurn > 0 and self.power > 1:
             self.power -= 1
 

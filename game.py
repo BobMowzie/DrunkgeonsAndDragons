@@ -63,6 +63,9 @@ class Game:
         for phase in phases:
             self.doEvent(phase)
 
+        for player in self.players.values():
+            player.resetPlayer()
+
         await self.printActions()
         await self.channel.send("\* \* \* \* \* \* \* \* \* \* \* \*")
         await self.printHealths()
@@ -71,8 +74,6 @@ class Game:
             await self.channel.send(list(self.players.values())[0].toString() + "**wins!**")
             await self.endGame()
             return
-        for player in self.players.values():
-            player.resetPlayer()
 
     async def addPlayer(self, user, _class):
         if not self.running:
@@ -126,7 +127,7 @@ class Game:
 
         # Run all event subscriptions in order. If two subscriptions have the same order, sort them by subscriber type.
         # This way, all effects and abilities of the same type will trigger at once.
-        subscriptions.sort(key=lambda sub: (sub.order, type(sub.subscriber)))
+        subscriptions.sort(key=lambda sub: (sub.order, type(sub.subscriber).__name__))
         prevSubClass = None
         for sub in subscriptions:
             # Check if this iteration is between subscriber types
@@ -141,10 +142,11 @@ class Game:
 
             # Otherwise, do the subscribed function
             sub.function(event)
+        event.betweenSubscriberTypes()
 
     async def printActions(self):
         for player in self.players.values():
-            ability = player.activeAbility
+            ability = player.abilityLastTurn
             if ability:
                 targetsString = ", ".join([target.toString() for target in ability.targets])
                 await self.channel.send(

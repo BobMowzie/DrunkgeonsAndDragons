@@ -18,7 +18,7 @@ class Warlock(PlayerBase):
 
     @classmethod
     def classDescription(cls):
-        return "Warlocks are a high-risk high-reward offensive class. They sacrifice their own health to deal damage."
+        return "High-risk, high-reward offensive class. Sacrifices their own health to deal damage."
 
     @classmethod
     def ability1(cls):

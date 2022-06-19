@@ -31,6 +31,7 @@ class PlayerBase(EventSubscriber):
 
         self.activeEffects = []
         self.activeAbility = None
+        self.abilityLastTurn = None
         self.alive = True
         self.curingClerics = []
         self.damageTaken = []  # List of DamageInstances
@@ -38,7 +39,7 @@ class PlayerBase(EventSubscriber):
 
         self.subscribeEvent(PhaseStartTurns, self.startTurn, -100)
         self.subscribeEvent(EventDealDamage, self.adjustDealDamage, 50)
-        self.subscribeEvent(EventTakeDamage, self.adjustTakeDamage, 50)
+        self.subscribeEvent(EventTakeDamage, self.adjustTakeDamage, -50)
         self.subscribeEvent(PhaseTakeDamage, self.takeDamage, 100)
 
     @classmethod
@@ -77,8 +78,8 @@ class PlayerBase(EventSubscriber):
             self.activeEffects.clear()
 
     def adjustDealDamage(self, event):
-        event.damageInstance.amount = max(0, event.damageInstance.amount + self.dealDamageAddition)
-        event.damageInstance.amount = math.floor(event.damageInstance.amount * self.dealDamageMultiplier)
+        event.damageInstance.newAmount = max(0, event.damageInstance.amount + self.dealDamageAddition)
+        event.damageInstance.newAmount = math.floor(event.damageInstance.amount * self.dealDamageMultiplier)
 
     def dealDamage(self, target, amount, source=None):
         damageInstance = DamageInstance(self, target, amount, source)
@@ -109,8 +110,8 @@ class PlayerBase(EventSubscriber):
                 self.damageTaken[i] = (source, 0)
 
     def adjustTakeDamage(self, event):
-        event.damageInstance.amount = max(0, event.damageInstance.amount + self.takeDamageAddition)
-        event.damageInstance.amount = math.floor(event.damageInstance.amount * self.takeDamageMultiplier)
+        event.damageInstance.newAmount = max(0, event.damageInstance.amount + self.takeDamageAddition)
+        event.damageInstance.newAmount = math.floor(event.damageInstance.amount * self.takeDamageMultiplier)
 
     def takeDamage(self, event):
         for damageInstance in self.damageTaken:
@@ -126,6 +127,7 @@ class PlayerBase(EventSubscriber):
                     self.alive = False
 
     def resetPlayer(self):
+        self.abilityLastTurn = self.activeAbility
         self.activeAbility = None
         self.damageTakenLastTurn = self.damageTakenThisTurn
         self.damageTakenThisTurn = 0

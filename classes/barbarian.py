@@ -71,7 +71,7 @@ class Strike(AbilityBase):
     def postEffect(self, event):
         consecutiveHit = False
         for damageInstance in self.caster.previousTarget.damageTaken:
-            if damageInstance.attacker == self and damageInstance.amount > 0 and not damageInstance.canceled:
+            if damageInstance.attacker == self.caster and damageInstance.amount > 0 and not damageInstance.canceled:
                 consecutiveHit = True
                 break
 
