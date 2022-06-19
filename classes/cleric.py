@@ -87,8 +87,16 @@ class DivineBarrier(AbilityBase):
 
     def applyEffects(self, event):
         target = self.targets[0]
-        target.addEffect(DivineBarrierEffect(self.caster, target, self.caster.blessings))
+        newBarrier = DivineBarrierEffect(self.caster, target, self.caster.blessings)
         self.caster.blessings = 1
+
+        oldBarrier = target.getEffect(DivineBarrierEffect)
+        if oldBarrier:
+            if oldBarrier.turnsRemaining < newBarrier.turnsRemaining:
+                target.removeEffect(DivineBarrierEffect)
+                target.addEffect(newBarrier)
+        else:
+            target.addEffect(newBarrier)
 
     def canUse(self):
         return len(self.targets) == 1
@@ -100,6 +108,7 @@ class DivineBarrier(AbilityBase):
 class DivineBarrierEffect(EffectBase):
     def __init__(self, caster, target, turnsRemaining):
         EffectBase.__init__(self, caster, target, turnsRemaining)
+        self.timed = False
         self.largestBlockedSoFar = 0
 
         self.subscribeEvent(PhaseStartTurns, self.startTurn, 0)
@@ -124,6 +133,3 @@ class DivineBarrierEffect(EffectBase):
             if amount > self.largestBlockedSoFar:
                 self.largestBlockedSoFar = amount
                 self.turnsRemaining = max(self.turnsRemaining - 1, 0)
-
-    def decrementTurnsRemaining(self):
-        pass

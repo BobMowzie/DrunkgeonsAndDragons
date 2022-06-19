@@ -11,6 +11,7 @@ class EffectBase(EventSubscriber):
             self.game = caster.game
         self.target = target
         self.turnsRemaining = turnsRemaining
+        self.timed = True
 
     @classmethod
     def effectName(cls):
@@ -21,4 +22,5 @@ class EffectBase(EventSubscriber):
         return ''
 
     def decrementTurnsRemaining(self):
-        self.turnsRemaining = max(self.turnsRemaining - 1, 0)
+        if self.timed:
+            self.turnsRemaining = max(self.turnsRemaining - 1, 0)

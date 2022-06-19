@@ -147,6 +147,11 @@ class PlayerBase(EventSubscriber):
     def hasEffect(self, effectType):
         return any(isinstance(effect, effectType) for effect in self.activeEffects)
 
+    def getEffect(self, effectType):
+        for effect in self.activeEffects:
+            if isinstance(effect, effectType):
+                return effect
+
     def removeEffect(self, effectType):
         self.activeEffects = [effect for effect in self.activeEffects if not isinstance(effect, effectType)]
 
