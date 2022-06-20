@@ -9,6 +9,7 @@ class AbilityBase(EventSubscriber):
         self.caster = caster
         self.game = caster.game
         self.targets = targets
+        self.canceled = False
 
     def canUse(self):
         return True

@@ -1,10 +1,15 @@
 from abc import ABC
+import copy
 
 class Event(ABC):
 	def __init__(self, game):
 		self.game = game
 		self.newCanceled = False
 		self.canceled = False
+
+	def beginEvent(self):
+		pass
+
 	"""
 	Called in between executing the subscription for different subscriber types.
 	For example, after applying all clerics' divine barriers but before applying all paladins' shields, this function
@@ -13,13 +18,20 @@ class Event(ABC):
 	def betweenSubscriberTypes(self):
 		self.canceled = self.newCanceled
 
+	def endEvent(self):
+		pass
+
 class PhaseStartTurns(Event):
 	pass
 
 class PhaseModifyActions(Event):
-	def betweenSubscriberTypes(self):
+	def beginEvent(self):
 		for player in self.game.getPlayers():
-			player.activeAbility = player.modifiedActiveAbility
+			player.modifiedActiveAbilities = copy.deepcopy(player.activeAbilities)
+
+	def endEvent(self):
+		for player in self.game.getPlayers():
+			player.activeAbilities = player.modifiedActiveAbilities
 
 class PhaseApplyEffects(Event):
 	pass

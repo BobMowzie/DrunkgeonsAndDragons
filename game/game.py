@@ -97,11 +97,8 @@ class Game:
             if not player:
                 return
             targetPlayers = [self.players[target] for target in targets if target in self.players.keys()]
-            abilityClass = player.ability1() if whichAbility == 1 else player.ability2()
-            ability = player.doAbility(abilityClass, targetPlayers)
-            if ability.canUse():
-                player.activeAbility = ability
-                player.modifiedActiveAbility = ability
+            ability = player.doAbility(whichAbility, targetPlayers)
+            if ability:
                 await self.channel.send(player.toString() + " entered their action")
             else:
                 await self.channel.send(player.toString() + " Invalid targets for ability")
@@ -111,10 +108,12 @@ class Game:
             player = self.players.get(actingUser)
             if not player:
                 return
-            player.activeAbility = None
+            player.activeAbilities = []
             await self.channel.send(player.toString() + " entered their action")
 
     def doEvent(self, event):
+        event.beginEvent()
+
         players = self.getPlayers()
         abilities = [player.activeAbility for player in players if player.activeAbility]
         effects = []
@@ -143,6 +142,7 @@ class Game:
             # Otherwise, do the subscribed function
             sub.function(event)
         event.betweenSubscriberTypes()
+        event.endEvent()
 
     async def printActions(self):
         for player in self.getPlayers():

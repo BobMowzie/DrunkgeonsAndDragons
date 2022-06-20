@@ -30,9 +30,11 @@ class PlayerBase(EventSubscriber):
         self.takeDamageAddition = 0
 
         self.activeEffects = []
-        self.activeAbility = None
-        self.modifiedActiveAbility = None
-        self.abilityLastTurn = None
+        self.inputAbility = None
+        self.activeAbilities = []
+        self.modifiedActiveAbilities = []
+        self.abilitiesLastTurn = []
+
         self.alive = True
         self.curingClerics = []
         self.damageTaken = []  # List of DamageInstances
@@ -63,8 +65,14 @@ class PlayerBase(EventSubscriber):
         toPrint += cls.ability2().abilityDescription() + "\n"
         return toPrint
 
-    def doAbility(self, abilityClass, target):
-        return abilityClass(self, target)
+    def doAbility(self, whichAbility, targets):
+        abilityClass = self.ability1() if whichAbility == 1 else self.ability2()
+        ability = abilityClass(self, targets)
+        if ability.canUse():
+            self.activeAbilities = [ability]
+            self.inputAbility = ability
+            return ability
+        return None
 
     def startTurn(self, event):
         self.activeEffects = [effect for effect in self.activeEffects if effect.turnsRemaining > 0]
@@ -102,8 +110,9 @@ class PlayerBase(EventSubscriber):
                     self.alive = False
 
     def resetPlayer(self):
-        self.abilityLastTurn = self.activeAbility
-        self.activeAbility = None
+        self.abilitiesLastTurn = self.activeAbilities
+        self.activeAbilities.clear()
+        self.inputAbility = None
         self.damageTakenLastTurn = self.damageTakenThisTurn
         self.damageTakenThisTurn = 0
         self.dealDamageMultiplier = 1
