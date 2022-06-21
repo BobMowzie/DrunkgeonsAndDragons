@@ -1,3 +1,5 @@
+from copy import deepcopy
+
 from base.playerBase import PlayerBase
 from base.abilityBase import AbilityBase
 from base.effectBase import EffectBase
@@ -73,8 +75,8 @@ class Bite(AbilityBase):
 
     def damageEffect(self, event):
         bonusDamage = 2
-        for player in self.caster.game.getPlayers():
-            for action in player.activeAbilities:
+        for player in self.game.getPlayers():
+            for action in player.getAllActiveAbilities():
                 if action and self.caster in action.targets:
                     bonusDamage = 0
                     break
@@ -129,16 +131,16 @@ class Maul(AbilityBase):
         return "Target player uses their ability on you instead this turn. Deal damage to your target equal to the number of players who targetted you this turn."
 
     def modifyActions(self, event):
-        actions = self.targets[0].activeAbilities
-        for action in actions:
-            if action:
-                for i in range(len(action.targets)):
-                    action.targets[i] = self.caster
+        target = self.targets[0]
+        abilityCopy = deepcopy(target.activeAbility)
+        abilityCopy.targets = [self.caster]
+        target.modifiedAbilities.append(abilityCopy)
+        target.activeAbility.canceled = True
 
     def damageEffect(self, event):
         targetCount = 0
         for player in self.caster.game.getPlayers():
-            actions = player.activeAbilities
+            actions = player.modifiedAbilities
             for action in actions:
                 if action and self.caster in action.targets:
                     targetCount += 1
@@ -242,4 +244,4 @@ class EntangledEffect(EffectBase):
         return '🌿'
 
     def modifyActions(self, event):
-        self.target.modifiedActiveAbilities = []
+        self.target.activeAbility.canceled = True

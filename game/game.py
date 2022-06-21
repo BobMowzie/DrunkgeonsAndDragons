@@ -115,7 +115,9 @@ class Game:
         event.beginEvent()
 
         players = self.getPlayers()
-        abilities = [player.activeAbility for player in players if player.activeAbility]
+        abilities = []
+        for player in players:
+            abilities.extend(player.getAllActiveAbilities())
         effects = []
         for player in players:
             effects.extend(player.activeEffects)
@@ -146,7 +148,7 @@ class Game:
 
     async def printActions(self):
         for player in self.getPlayers():
-            ability = player.abilityLastTurn
+            ability = player.activeAbilityLastTurn
             if ability:
                 targetsString = ", ".join([target.toString() for target in ability.targets])
                 await self.channel.send(

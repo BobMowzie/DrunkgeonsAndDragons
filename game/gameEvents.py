@@ -25,13 +25,7 @@ class PhaseStartTurns(Event):
 	pass
 
 class PhaseModifyActions(Event):
-	def beginEvent(self):
-		for player in self.game.getPlayers():
-			player.modifiedActiveAbilities = copy.deepcopy(player.activeAbilities)
-
-	def endEvent(self):
-		for player in self.game.getPlayers():
-			player.activeAbilities = player.modifiedActiveAbilities
+	pass
 
 class PhaseApplyEffects(Event):
 	pass

@@ -30,10 +30,12 @@ class PlayerBase(EventSubscriber):
         self.takeDamageAddition = 0
 
         self.activeEffects = []
-        self.inputAbility = None
-        self.activeAbilities = []
-        self.modifiedActiveAbilities = []
-        self.abilitiesLastTurn = []
+        self.activeAbility = None
+        self.activeAbilityLastTurn = None
+        # For when other abilities change or add this players action during a turn. Sometimes more than one
+        # ability per player is possible.
+        self.modifiedAbilities = []
+        self.modifiedAbilitiesLastTurn = []
 
         self.alive = True
         self.curingClerics = []
@@ -69,10 +71,15 @@ class PlayerBase(EventSubscriber):
         abilityClass = self.ability1() if whichAbility == 1 else self.ability2()
         ability = abilityClass(self, targets)
         if ability.canUse():
-            self.activeAbilities = [ability]
-            self.inputAbility = ability
+            self.activeAbility = ability
             return ability
         return None
+
+    def getAllActiveAbilities(self):
+        abilities = [self.activeAbility]
+        abilities.extend(self.modifiedAbilities)
+        abilities = [ability for ability in abilities if ability and not ability.canceled]
+        return abilities
 
     def startTurn(self, event):
         self.activeEffects = [effect for effect in self.activeEffects if effect.turnsRemaining > 0]
@@ -110,9 +117,10 @@ class PlayerBase(EventSubscriber):
                     self.alive = False
 
     def resetPlayer(self):
-        self.abilitiesLastTurn = self.activeAbilities
-        self.activeAbilities.clear()
-        self.inputAbility = None
+        self.modifiedAbilitiesLastTurn = self.modifiedAbilities
+        self.modifiedAbilities.clear()
+        self.activeAbilityLastTurn = self.activeAbility
+        self.activeAbility = None
         self.damageTakenLastTurn = self.damageTakenThisTurn
         self.damageTakenThisTurn = 0
         self.dealDamageMultiplier = 1
