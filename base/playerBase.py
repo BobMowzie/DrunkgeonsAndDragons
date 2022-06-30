@@ -124,6 +124,7 @@ class PlayerBase(EventSubscriber):
         self.damageTakenLastTurn = self.damageTakenThisTurn
         self.damageTakenThisTurn = 0
         self.dealDamageMultiplier = 1
+        self.dealDamageAddition = 0
         self.takeDamageMultiplier = 1
         self.takeDamageAddition = 0
         for effect in self.activeEffects:
