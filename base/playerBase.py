@@ -85,8 +85,9 @@ class PlayerBase(EventSubscriber):
         self.activeEffects = [effect for effect in self.activeEffects if effect.turnsRemaining > 0]
 
     def adjustDealDamage(self, event):
-        event.damageInstance.newAmount = max(0, event.damageInstance.amount + self.dealDamageAddition)
-        event.damageInstance.newAmount = math.floor(event.damageInstance.amount * self.dealDamageMultiplier)
+        if event.damageInstance.attacker == self:
+            event.damageInstance.newAmount = max(0, event.damageInstance.amount + self.dealDamageAddition)
+            event.damageInstance.newAmount = math.floor(event.damageInstance.amount * self.dealDamageMultiplier)
 
     def dealDamage(self, target, amount, source=None):
         damageInstance = DamageInstance(self, target, amount, source)
@@ -99,8 +100,9 @@ class PlayerBase(EventSubscriber):
             target.damageTaken.append(damageInstance)
 
     def adjustTakeDamage(self, event):
-        event.damageInstance.newAmount = max(0, event.damageInstance.amount + self.takeDamageAddition)
-        event.damageInstance.newAmount = math.floor(event.damageInstance.amount * self.takeDamageMultiplier)
+        if event.damageInstance.target == self:
+            event.damageInstance.newAmount = max(0, event.damageInstance.amount + self.takeDamageAddition)
+            event.damageInstance.newAmount = math.floor(event.damageInstance.amount * self.takeDamageMultiplier)
 
     def takeDamage(self, event):
         self.damageTaken.sort(key=lambda di: di.amount)
