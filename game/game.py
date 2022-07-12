@@ -8,11 +8,15 @@ class Game:
     """A running instance of the game"""
 
     def __init__(self, channel):
+        self.maxTurnLength = 90
+
         self.channel = channel
         self.players = {}
         self.running = False
         self.turns = 1
         self.takingCommands = False
+
+        self.playersActedThisTurn = set()
 
     async def newGame(self):
         await self.channel.send("Created game")
@@ -39,11 +43,18 @@ class Game:
         await self.channel.send("**Turn " + str(self.turns) + "**")
         self.turns += 1
 
+        self.playersActedThisTurn.clear()
         self.takingCommands = True
         #
         # await self.enterAction(list(self.players.keys())[1], 2, [list(self.players.keys())[0]])
         #
-        await asyncio.sleep(10)
+        turnTimer = 0
+        while turnTimer < self.maxTurnLength:
+            await asyncio.sleep(1)
+            turnTimer += 1
+            if len(self.playersActedThisTurn) == len(self.players):
+                break
+
         self.takingCommands = False
         if not self.running:
             return
@@ -99,6 +110,7 @@ class Game:
             targetPlayers = [self.players[target] for target in targets if target in self.players.keys()]
             ability = player.doAbility(whichAbility, targetPlayers)
             if ability:
+                self.playersActedThisTurn.add(player)
                 await self.channel.send(player.toString() + " entered their action")
             else:
                 await self.channel.send(player.toString() + " Invalid targets for ability")
@@ -109,6 +121,7 @@ class Game:
             if not player:
                 return
             player.activeAbilities = []
+            self.playersActedThisTurn.add(player)
             await self.channel.send(player.toString() + " entered their action")
 
     def doEvent(self, event):
