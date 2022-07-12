@@ -45,10 +45,15 @@ class Druid(PlayerBase):
             "Bear": BearEffect
         }
         for name, effect in forms.items():
+            separator = ""
+            emoji = ""
             if effect:
                 druid.activeEffects.clear()
                 druid.activeEffects.append(effect(None, None, 1))
-            toPrint += "**" + name + " Form:**\n"
+                emoji = " " + effect.effectEmoji()
+                separator = "\* \* \* \* \* \* \* \* \* \* \* \*\n"
+            toPrint += separator
+            toPrint += "**" + name + " Form" + emoji + ":**\n"
             toPrint += "**Ability 1: " + druid.ability1().abilityName() + "**\n"
             toPrint += druid.ability1().abilityDescription() + "\n"
             toPrint += "**Ability 2: " + druid.ability2().abilityName() + "**\n"
@@ -101,7 +106,7 @@ class Howl(AbilityBase):
 
     @classmethod
     def abilityDescription(cls):
-        return "Switch to wolf form. Target deals double damage next turn."
+        return "Switch to Wolf Form (🐺). Target gains Moonlit (🌙) next turn, making their attacks deal double damage."
 
     def applyEffects(self, event):
         self.caster.removeEffect(BearEffect)
@@ -155,7 +160,8 @@ class EntanglingVines(AbilityBase):
     def __init__(self, caster: Druid, targets):
         AbilityBase.__init__(self, caster, targets)
 
-        self.subscribeEvent(PhaseStartTurns, self.startTurnEffect, 0)
+        self.subscribeEvent(PhaseApplyEffects, self.applyEffects, 0)
+        self.subscribeEvent(PhasePostDamage, self.postDamage, 0)
 
     @classmethod
     def abilityName(cls):
@@ -163,11 +169,11 @@ class EntanglingVines(AbilityBase):
 
     @classmethod
     def abilityDescription(cls):
-        return "Switch to bear form. Target skips their turn."
+        return "Switch to Bear Form (🐻). Entangle (🌿) your target, causing them to skip their next turn."
 
-    def startTurnEffect(self, event):
+    def postDamage(self, event):
         self.targets[0].removeEffect(EntangledEffect)
-        self.targets[0].addEffect(EntangledEffect(self.caster, self.targets[0], 1))
+        self.targets[0].addEffect(EntangledEffect(self.caster, self.targets[0], 2))
 
     def applyEffects(self, event):
         self.caster.removeEffect(WolfEffect)

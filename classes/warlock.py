@@ -67,7 +67,7 @@ class Soulbind(AbilityBase):
 
     @classmethod
     def abilityDescription(cls):
-        return 'Bind your soul to a target for 2 turns. Whenever you are dealt damage, they are dealt that damage too.'
+        return 'Souldbind (👻) to a target for 2 turns. Whenever you are dealt damage, they are dealt that damage too.'
 
     def applyEffects(self, events):
         target = self.targets[0]

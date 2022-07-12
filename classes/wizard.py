@@ -22,7 +22,7 @@ class Wizard(PlayerBase):
     @classmethod
     def classDescription(cls):
         return "Offensive but fragile class that charges up power by skipping turns and unleashes it in powerful " \
-               "spells. Power decreases by 1 if they take damage. Power cannot go below 1. "
+               "spells. Skip your turn to gain 2 power, but lose 1 power instead if you take damage. Power cannot go below 1. "
 
     @classmethod
     def ability1(cls):
@@ -81,7 +81,7 @@ class Incinerate(AbilityBase):
 
     @classmethod
     def abilityDescription(cls):
-        return 'Spend all your power to burn your target for that many turns.'
+        return 'Spend all your power to Burn (🔥) your target for that many turns.'
 
     def applyEffects(self, event):
         target = self.targets[0]

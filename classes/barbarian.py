@@ -98,7 +98,7 @@ class Enrage(AbilityBase):
 
     @classmethod
     def abilityDescription(cls):
-        return "Deal double damage for the following 3 turns. Using this will not reset consecutive target hits."
+        return "Enrage (💢) yourself to deal double damage for the following 3 turns. Using this will not reset consecutive target hits from Strike."
 
     def postEffect(self, event):
         self.targets[0].removeEffect(EnrageEffect)
