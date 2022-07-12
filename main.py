@@ -1,6 +1,10 @@
 import os
+from typing import List, Sequence, Optional
+
 import discord
 from discord.ext import commands
+from discord import app_commands
+from discord.app_commands import Choice
 from game.game import Game
 from base.playerBase import classEmojis, classNames
 
@@ -38,7 +42,7 @@ async def doInfo(game, user, _class):
 
 
 def is_me(m):
-  return m.author == bot.user
+    return m.author == bot.user
 
 
 async def doAllInfo(channel):
@@ -70,67 +74,81 @@ async def debugGame():
     await doStartGame(game)
 
 
-@bot.event
-async def on_ready():
-    print('Logged in as {0}'.format(bot.user))
-    # await debugGame()
+class aclient(discord.Client):
+    def __init__(self):
+        super().__init__(intents=discord.Intents.default())
+        self.synced = False
+
+    async def on_ready(self):
+        await self.wait_until_ready()
+        if not self.synced:
+            await tree.sync(guild=guild)
+            self.synced = True
+        print(f"Logged in as {self.user}")
+        # await debugGame()
 
 
-@bot.command()
-async def newGame(ctx):
-    await doNewGame(ctx.channel)
+client = aclient()
+tree = app_commands.CommandTree(client)
+guild = discord.Object(id=932077177875337278)
+
+classChoices = [Choice(name=className, value=className) for className in classNames.keys()]
 
 
-@bot.command()
-async def startGame(ctx):
-    await doStartGame(games[ctx.channel])
+@tree.command(name="new_game", description="Create a new game.", guild=guild)
+async def newGame(interaction: discord.Interaction):
+    await doNewGame(interaction.channel)
 
 
-@bot.command()
-async def endGame(ctx):
-    await doEndGame(games[ctx.channel])
+@tree.command(name="start_game", description="Start the game.", guild=guild)
+async def startGame(interaction: discord.Interaction):
+    await doStartGame(games[interaction.channel])
 
 
-@bot.command()
-async def join(ctx, classInput: str):
+@tree.command(name="end_game", description="End the game.", guild=guild)
+async def endGame(interaction: discord.Interaction):
+    await doEndGame(games[interaction.channel])
+
+
+@tree.command(name="join", description="Join the game in this channel.", guild=guild)
+@app_commands.choices(class_input = classChoices)
+async def join(interaction: discord.Interaction, class_input: str):
     # Player can specify class name or emoji
-    _class = classEmojis.get(classInput)
+    _class = classEmojis.get(class_input)
     if not _class:
-        _class = classNames.get(classInput.capitalize())
-    await doAddPlayer(games[ctx.channel], ctx.author, _class)
+        _class = classNames.get(class_input.capitalize())
+    await doAddPlayer(games[interaction.channel], interaction.user, _class)
 
 
-@bot.command()
-async def info(ctx, classInput: str):
+@tree.command(name="info", description="View info and abilities for a specific class. "
+                                       "Specify no class to view your current class.", guild=guild)
+@app_commands.choices(class_input = classChoices)
+async def info(interaction: discord.Interaction, class_input: Optional[str] = None):
     # Player can specify class name or emoji
-    _class = classEmojis.get(classInput)
+    _class = classEmojis.get(class_input)
     if not _class:
-        _class = classNames.get(classInput.capitalize())
-    await doInfo(games[ctx.channel], ctx.author, _class)
+        _class = classNames.get(class_input.capitalize())
+    await doInfo(games[interaction.channel], interaction.user, _class)
 
 
-@bot.command(name='1')
-async def ability1(ctx, *targets: discord.Member):
-    await ctx.message.delete()
-    await doAbility(games[ctx.channel], ctx.author, 1, targets)
+@tree.command(name="all_info", description="View all class info and abilities.", guild=guild)
+async def allInfo(interaction: discord.Interaction):
+    await doAllInfo(interaction.channel)
 
 
-@bot.command(name='2')
-async def ability2(ctx, *targets: discord.Member):
-    await ctx.message.delete()
-    await doAbility(games[ctx.channel], ctx.author, 2, targets)
+@tree.command(name="1", description="Use ability 1.", guild=guild)
+async def ability1(interaction: discord.Interaction, target: discord.User):
+    await doAbility(games[interaction.channel], interaction.user, 1, [target])
 
 
-@bot.command(name='skip')
-async def skipTurn(ctx):
-    await ctx.message.delete()
-    await doSkipTurn(games[ctx.channel], ctx.author)
+@tree.command(name="2", description="Use ability 2.", guild=guild)
+async def ability2(interaction: discord.Interaction, target: discord.User):
+    await doAbility(games[interaction.channel], interaction.user, 2, [target])
 
 
-@bot.command(name='allInfo')
-async def allInfo(ctx):
-    await ctx.message.delete()
-    await doAllInfo(ctx.channel)
+@tree.command(name="skip", description="Skip your turn.", guild=guild)
+async def skipTurn(interaction: discord.Interaction):
+    await doSkipTurn(games[interaction.channel], interaction.user)
 
 
-bot.run(os.environ['TOKEN'])
+client.run(os.environ['TOKEN'])
