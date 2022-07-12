@@ -1,6 +1,7 @@
 from base.playerBase import PlayerBase
 from base.abilityBase import AbilityBase
 from base.effectBase import EffectBase
+from game.gameEvents import PhaseDealDamage, PhaseApplyEffects, EventDealDamage
 
 
 class Warlock(PlayerBase):
@@ -28,21 +29,14 @@ class Warlock(PlayerBase):
     def ability2(cls):
         return Soulbind
 
-    def addDamageSource(self, amount, damager, source=None):
-        if not isinstance(source, SoulboundEffect):
-            if self.soulboundEffect:
-                target = self.soulboundEffect.target
-                if self.soulboundEffect in target.activeEffects:
-                    target.addDamageSource(amount, self, self.soulboundEffect)
-            PlayerBase.addDamageSource(self, amount, damager, source)
-
-
 #######################################
 # Abilities
 #######################################
 class EldritchBlast(AbilityBase):
     def __init__(self, caster: Warlock, targets):
         AbilityBase.__init__(self, caster, targets)
+
+        self.subscribeEvent(PhaseDealDamage, self.damageEffect, 0)
 
     @classmethod
     def abilityName(cls):
@@ -52,7 +46,7 @@ class EldritchBlast(AbilityBase):
     def abilityDescription(cls):
         return 'Deal 3 damage to a target and 1 damage to yourself.'
 
-    def damageEffect(self):
+    def damageEffect(self, event):
         target = self.targets[0]
         self.caster.dealDamage(target, 3)
         self.caster.dealDamage(self.caster, 1)
@@ -65,17 +59,22 @@ class Soulbind(AbilityBase):
     def __init__(self, caster: Warlock, targets):
         AbilityBase.__init__(self, caster, targets)
 
+        self.subscribeEvent(PhaseApplyEffects, self.applyEffects, 0)
+
     @classmethod
     def abilityName(cls):
         return "Soulbind"
 
     @classmethod
     def abilityDescription(cls):
-        return 'Bind your soul to a target for 3 turns. Whenever you take damage, they take damage too.'
+        return 'Bind your soul to a target for 2 turns. Whenever you are dealt damage, they are dealt that damage too.'
 
-    def applyEffects(self):
+    def applyEffects(self, events):
         target = self.targets[0]
-        self.caster.soulboundEffect = SoulboundEffect(self.caster, target, 3)
+        soulboundEffect = self.caster.soulboundEffect
+        if soulboundEffect and soulboundEffect in soulboundEffect.target.activeEffects:
+            soulboundEffect.target.removeEffectInstance(soulboundEffect)
+        self.caster.soulboundEffect = SoulboundEffect(self.caster, target, 2)
         target.addEffect(self.caster.soulboundEffect)
 
     def canUse(self):
@@ -89,6 +88,8 @@ class SoulboundEffect(EffectBase):
     def __init__(self, caster, target, turnsRemaining):
         EffectBase.__init__(self, caster, target, turnsRemaining)
 
+        self.subscribeEvent(EventDealDamage, self.dealDamageEvent, 99)
+
     @classmethod
     def effectName(cls):
         return "Soulbound"
@@ -96,3 +97,11 @@ class SoulboundEffect(EffectBase):
     @classmethod
     def effectEmoji(cls):
         return '👻'
+
+    def dealDamageEvent(self, event):
+        damageInstance = event.damageInstance
+        if isinstance(damageInstance.target, Warlock) \
+                and damageInstance.target.soulboundEffect == self\
+                and not isinstance(damageInstance.source, SoulboundEffect)\
+                and not damageInstance.canceled:
+            self.caster.dealDamage(self.target, damageInstance.amount, self)

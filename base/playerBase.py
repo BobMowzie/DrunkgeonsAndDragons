@@ -158,6 +158,9 @@ class PlayerBase(EventSubscriber):
     def removeEffect(self, effectType):
         self.activeEffects = [effect for effect in self.activeEffects if not isinstance(effect, effectType)]
 
+    def removeEffectInstance(self, effect):
+        self.activeEffects.remove(effect)
+
     def addEffect(self, effect):
         event = EventApplyEffect(effect, self.game)
         self.game.doEvent(event)
