@@ -54,6 +54,7 @@ class Game:
             turnTimer += 1
             if len(self.playersActedThisTurn) == len(self.players):
                 break
+        await asyncio.sleep(5)
 
         self.takingCommands = False
         if not self.running:
