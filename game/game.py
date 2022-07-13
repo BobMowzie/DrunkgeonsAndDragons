@@ -1,7 +1,7 @@
 import asyncio
 import itertools
 
-from base.playerBase import classEmojis
+from base.playerBase import classEmojis, PlayerBase
 from game.gameEvents import *
 
 class Game:
@@ -19,8 +19,7 @@ class Game:
         self.playersActedThisTurn = set()
 
     async def newGame(self):
-        await self.channel.send("Created game")
-        classMessage = "Type .join followed by a class name or emoji to join!"
+        classMessage = "Type /join followed by a class name to join!"
         for emoji, _class in classEmojis.items():
             classMessage += '\n'
             classMessage += emoji + ': ' + _class.className()
@@ -28,7 +27,6 @@ class Game:
 
     async def startGame(self):
         await self.channel.send("\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_")
-        await self.channel.send("**Game started!**")
         await self.printHealths(False)
         self.running = True
         while self.running:
@@ -36,7 +34,6 @@ class Game:
 
     async def endGame(self):
         self.running = False
-        await self.channel.send("Ending game")
 
     async def gameLoop(self):
         await self.channel.send("\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_")
@@ -90,40 +87,71 @@ class Game:
         if not self.running:
             newPlayer = _class(user, self)
             self.players[user] = newPlayer
-            await self.channel.send("Added player " + user.name + " as a " + newPlayer.className())
+            return True
+        return False
 
-    async def info(self, user, _class):
+    def info(self, user, _class):
         if not _class:
             player = self.players.get(user)
             if self.players.get(user):
                 _class = player
             else:
-                await self.channel.send("Specify a class for info")
-                return
+                return "Specify a class for info"
         toPrint = _class.getInfo()
-        await self.channel.send(toPrint)
+        return toPrint
+
+    async def printEnteredAction(self, player):
+        await self.channel.send(player.toString() + " entered their action.")
+
+    def checkAction(self, actingUser):
+        if not self.running:
+            return False, "Game hasn't started yet."
+
+        player = self.players.get(actingUser)
+        if not player:
+            return False, "You are not a player in this game."
+        if not player.alive:
+            return False, "You are dead and cannot act."
+
+        if not self.takingCommands:
+            return False, "Please wait for the next turn to begin."
+
+        return True, ""
 
     async def enterAction(self, actingUser, whichAbility, targets):
-        if self.running and self.takingCommands:
-            player = self.players.get(actingUser)
-            if not player:
-                return
-            targetPlayers = [self.players[target] for target in targets if target in self.players.keys()]
-            ability = player.doAbility(whichAbility, targetPlayers)
-            if ability:
-                self.playersActedThisTurn.add(player)
-                await self.channel.send(player.toString() + " entered their action")
-            else:
-                await self.channel.send(player.toString() + " Invalid targets for ability")
+        passed, message = self.checkAction(actingUser)
+        if not passed:
+            return False, message
+
+        if whichAbility != 1 and whichAbility != 2:
+            return False, f"Invalid ability number {whichAbility}. Please choose ability 1 or 2."
+
+        targetPlayers = []
+        for target in targets:
+            targetPlayer = self.players.get(target)
+            if not targetPlayer:
+                return False, f"{target.name} is not a player in this game."
+            if not targetPlayer.alive:
+                return False, f"{target.name} is dead and cannot be targeted."
+            targetPlayers.append(targetPlayer)
+
+        player = self.players.get(actingUser)
+        succeeded, message = player.doAbility(whichAbility, targetPlayers)
+        if succeeded:
+            self.playersActedThisTurn.add(player)
+            await self.printEnteredAction(player)
+        return succeeded, message
 
     async def skipTurn(self, actingUser):
-        if self.running and self.takingCommands:
-            player = self.players.get(actingUser)
-            if not player:
-                return
-            player.activeAbilities = []
-            self.playersActedThisTurn.add(player)
-            await self.channel.send(player.toString() + " entered their action")
+        passed, message = self.checkAction(actingUser)
+        if not passed:
+            return False, message
+
+        player = self.players.get(actingUser)
+        player.activeAbilities = []
+        self.playersActedThisTurn.add(player)
+        await self.printEnteredAction(player)
+        return True, "Skipping turn."
 
     def doEvent(self, event):
         event.beginEvent()
@@ -166,12 +194,14 @@ class Game:
             if ability:
                 targetsString = ", ".join([target.toString() for target in ability.targets])
                 await self.channel.send(
-                    player.toString() + " used ability " + ability.abilityName() + " on " + targetsString)
+                    player.toString() + " used ability **" + ability.abilityName() + "** on " + targetsString)
             else:
                 await self.channel.send(player.toString() + " skipped their turn")
 
     async def printHealths(self, doDrinks=True):
         for player in self.players.values():
+            if not player.alive:
+                continue
             playerString = player.toString()
             if doDrinks:
                 playerString += " drink " + str(player.damageTakenLastTurn)

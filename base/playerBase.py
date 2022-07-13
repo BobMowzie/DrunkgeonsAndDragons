@@ -70,10 +70,14 @@ class PlayerBase(EventSubscriber):
     def doAbility(self, whichAbility, targets):
         abilityClass = self.ability1() if whichAbility == 1 else self.ability2()
         ability = abilityClass(self, targets)
-        if ability.canUse():
+        canUse = ability.canUse()
+        targetNames = [target.user.name for target in targets]
+        message = "Using ability **" + ability.abilityName() + "** on " + ", ".join(targetNames) + "."
+        if canUse:
             self.activeAbility = ability
-            return ability
-        return None
+        else:
+            message = "Invalid targets for ability **" + ability.abilityName() + "**."
+        return canUse, message
 
     def getAllActiveAbilities(self):
         abilities = [self.activeAbility]
