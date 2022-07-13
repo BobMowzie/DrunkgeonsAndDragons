@@ -71,7 +71,7 @@ class PlayerBase(EventSubscriber):
         abilityClass = self.ability1() if whichAbility == 1 else self.ability2()
         ability = abilityClass(self, targets)
         canUse = ability.canUse()
-        targetNames = [target.user.name for target in targets]
+        targetNames = [target.toString() for target in targets]
         message = "Using ability **" + ability.abilityName() + "** on " + ", ".join(targetNames) + "."
         if canUse:
             self.activeAbility = ability
@@ -121,6 +121,7 @@ class PlayerBase(EventSubscriber):
                 if self.health <= 0:
                     self.health = 0
                     self.alive = False
+                    self.game.deadPlayers.append(self.user)
 
     def resetPlayer(self):
         self.modifiedAbilitiesLastTurn = self.modifiedAbilities

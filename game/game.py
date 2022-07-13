@@ -12,6 +12,7 @@ class Game:
 
         self.channel = channel
         self.players = {}
+        self.deadPlayers = {}
         self.running = False
         self.turns = 1
         self.takingCommands = False
@@ -107,11 +108,11 @@ class Game:
         if not self.running:
             return False, "Game hasn't started yet."
 
+        if actingUser in self.deadPlayers:
+            return False, "You are dead and cannot act."
         player = self.players.get(actingUser)
         if not player:
             return False, "You are not a player in this game."
-        if not player.alive:
-            return False, "You are dead and cannot act."
 
         if not self.takingCommands:
             return False, "Please wait for the next turn to begin."
@@ -128,11 +129,11 @@ class Game:
 
         targetPlayers = []
         for target in targets:
+            if target in self.deadPlayers:
+                return False, f"{target.name} is dead and cannot be targeted."
             targetPlayer = self.players.get(target)
             if not targetPlayer:
                 return False, f"{target.name} is not a player in this game."
-            if not targetPlayer.alive:
-                return False, f"{target.name} is dead and cannot be targeted."
             targetPlayers.append(targetPlayer)
 
         player = self.players.get(actingUser)
