@@ -65,9 +65,6 @@ class Fireball(AbilityBase):
         self.caster.dealDamage(target, self.caster.power, self)
         self.caster.power = 1
 
-    def canUse(self):
-        return len(self.targets) == 1 and self.targets[0] != self.caster
-
 
 class Incinerate(AbilityBase):
     def __init__(self, caster: Wizard, targets):
@@ -87,9 +84,6 @@ class Incinerate(AbilityBase):
         target = self.targets[0]
         target.addEffect(BurnEffect(self.caster, target, self.caster.power))
         self.caster.power = 1
-
-    def canUse(self):
-        return len(self.targets) == 1 and self.targets[0] != self.caster
 
 
 #######################################

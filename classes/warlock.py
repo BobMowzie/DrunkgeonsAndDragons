@@ -29,6 +29,7 @@ class Warlock(PlayerBase):
     def ability2(cls):
         return Soulbind
 
+
 #######################################
 # Abilities
 #######################################
@@ -50,9 +51,6 @@ class EldritchBlast(AbilityBase):
         target = self.targets[0]
         self.caster.dealDamage(target, 3)
         self.caster.dealDamage(self.caster, 1)
-
-    def canUse(self):
-        return len(self.targets) == 1 and self.targets[0] != self.caster
 
 
 class Soulbind(AbilityBase):
@@ -76,9 +74,6 @@ class Soulbind(AbilityBase):
             soulboundEffect.target.removeEffectInstance(soulboundEffect)
         self.caster.soulboundEffect = SoulboundEffect(self.caster, target, 2)
         target.addEffect(self.caster.soulboundEffect)
-
-    def canUse(self):
-        return len(self.targets) == 1 and self.targets[0] != self.caster
 
 
 #######################################

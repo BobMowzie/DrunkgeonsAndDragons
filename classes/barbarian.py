@@ -81,14 +81,12 @@ class Strike(AbilityBase):
             self.caster.consecutiveDamageBonus = 0
             self.caster.previousTarget = None
 
-    def canUse(self):
-        return len(self.targets) == 1 and self.targets[0] != self.caster
-
 
 class Enrage(AbilityBase):
     def __init__(self, caster: Barbarian, targets):
         AbilityBase.__init__(self, caster, targets)
-        self.targets = [self.caster]
+        if len(self.targets) == 0:
+            self.targets = [self.caster]
 
         self.subscribeEvent(PhasePostDamage, self.postEffect, 0)
 
@@ -104,8 +102,13 @@ class Enrage(AbilityBase):
         self.targets[0].removeEffect(EnrageEffect)
         self.targets[0].addEffect(EnrageEffect(self.caster, self.caster, 4))
 
-    def canUse(self):
-        return len(self.targets) == 1 and self.targets[0] == self.caster
+    @classmethod
+    def canTargetOthers(cls):
+        return False
+
+    @classmethod
+    def minNumTargets(cls):
+        return 0
 
 
 #######################################

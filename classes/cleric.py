@@ -67,8 +67,9 @@ class Cure(AbilityBase):
             event.newCanceled = True
             self.caster.blessings += 1
 
-    def canUse(self):
-        return len(self.targets) == 1
+    @classmethod
+    def canSelfTarget(cls):
+        return True
 
 
 class DivineBarrier(AbilityBase):
@@ -98,8 +99,9 @@ class DivineBarrier(AbilityBase):
         else:
             target.addEffect(newBarrier)
 
-    def canUse(self):
-        return len(self.targets) == 1
+    @classmethod
+    def canSelfTarget(cls):
+        return True
 
 
 #######################################

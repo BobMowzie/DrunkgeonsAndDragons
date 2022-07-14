@@ -11,9 +11,6 @@ class AbilityBase(EventSubscriber):
         self.targets = targets
         self.canceled = False
 
-    def canUse(self):
-        return True
-
     @classmethod
     def abilityName(cls):
         return ''
@@ -21,3 +18,35 @@ class AbilityBase(EventSubscriber):
     @classmethod
     def abilityDescription(cls):
         return ''
+
+    def canUse(self):
+        numTargets = len(self.targets)
+        if numTargets > self.maxNumTargets():
+            return False, "Too many targets for ability **" + self.abilityName()\
+                   + "**. Given " + str(numTargets) + ", maximum is " + str(self.maxNumTargets()) + "."
+        if numTargets > self.minNumTargets():
+            return False, "Too few targets for ability **" + self.abilityName()\
+                   + "**. Given " + str(numTargets) + ", minimum is " + str(self.minNumTargets()) + "."
+        if not self.canSelfTarget():
+            if self.caster in self.targets:
+                return False, "Cannot target self with ability **" + self.abilityName() + "**."
+        if not self.canTargetOthers():
+            if self.caster not in self.targets:
+                return False, "Must target self with ability **" + self.abilityName() + "**."
+        return True, ""
+
+    @classmethod
+    def canSelfTarget(cls):
+        return False
+
+    @classmethod
+    def canTargetOthers(cls):
+        return True
+
+    @classmethod
+    def maxNumTargets(cls):
+        return 1
+
+    @classmethod
+    def minNumTargets(cls):
+        return 1

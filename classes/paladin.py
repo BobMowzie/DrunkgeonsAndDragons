@@ -79,8 +79,9 @@ class Shield(AbilityBase):
             blockedAmount = math.floor(damageInstance.amount / 2)
             damageInstance.newAmount = blockedAmount
 
-    def canUse(self):
-        return len(self.targets) == 1
+    @classmethod
+    def canSelfTarget(cls):
+        return True
 
 
 class Retribution(AbilityBase):
@@ -100,7 +101,3 @@ class Retribution(AbilityBase):
     def damageEffect(self, event):
         target = self.targets[0]
         self.caster.dealDamage(target, self.caster.biggestAttackLastTurn + 1, self)
-
-    def canUse(self):
-        return len(self.targets) == 1 and self.targets[0] != self.caster
-

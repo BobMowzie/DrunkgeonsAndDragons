@@ -89,9 +89,6 @@ class Bite(AbilityBase):
                 break
         self.caster.dealDamage(self.targets[0], 1 + bonusDamage)
 
-    def canUse(self):
-        return len(self.targets) == 1 and self.targets[0] != self.caster
-
 
 class Howl(AbilityBase):
     def __init__(self, caster: Druid, targets):
@@ -116,8 +113,9 @@ class Howl(AbilityBase):
         self.targets[0].removeEffect(MoonlitEffect)
         self.targets[0].addEffect(MoonlitEffect(self.caster, self.caster, 2))
 
-    def canUse(self):
-        return len(self.targets) == 1
+    @classmethod
+    def canSelfTarget(cls):
+        return True
 
 
 class Maul(AbilityBase):
@@ -152,9 +150,6 @@ class Maul(AbilityBase):
                     break
         self.caster.dealDamage(self.targets[0], targetCount)
 
-    def canUse(self):
-        return len(self.targets) == 1 and self.targets[0] != self.caster
-
 
 class EntanglingVines(AbilityBase):
     def __init__(self, caster: Druid, targets):
@@ -178,9 +173,6 @@ class EntanglingVines(AbilityBase):
     def applyEffects(self, event):
         self.caster.removeEffect(WolfEffect)
         self.caster.addEffect(BearEffect(self.caster, self.caster, 4))
-
-    def canUse(self):
-        return len(self.targets) == 1 and self.targets[0] != self.caster
 
 
 #######################################

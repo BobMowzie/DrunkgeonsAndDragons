@@ -149,13 +149,13 @@ async def respondToAction(interaction: discord.Interaction, succeeded, message):
 
 
 @tree.command(name="1", description="Use ability 1.", guild=guild)
-async def ability1(interaction: discord.Interaction, target: discord.User):
+async def ability1(interaction: discord.Interaction, target: Optional[discord.User]):
     succeeded, message = await doAbility(games[interaction.channel], interaction.user, 1, [target])
     await respondToAction(interaction, succeeded, message)
 
 
 @tree.command(name="2", description="Use ability 2.", guild=guild)
-async def ability2(interaction: discord.Interaction, target: discord.User):
+async def ability2(interaction: discord.Interaction, target: Optional[discord.User]):
     succeeded, message = await doAbility(games[interaction.channel], interaction.user, 2, [target])
     await respondToAction(interaction, succeeded, message)
 
