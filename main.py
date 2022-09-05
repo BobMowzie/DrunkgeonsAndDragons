@@ -2,11 +2,10 @@ import os
 from typing import List, Sequence, Optional
 
 import discord
-from discord.ext import commands
 from discord import app_commands
 from discord.app_commands import Choice
 from game.game import Game
-from base.playerBase import classEmojis, classNames
+from base.playerBase import classEmojis, classNames, Team
 
 intents = discord.Intents.default()
 intents.members = True
@@ -26,7 +25,7 @@ class MyClient(discord.Client):
             await tree.sync(guild=guild)
             self.synced = True
         print(f"Logged in as {self.user}")
-        await debugGame()
+        # await debugGame()
 
 
 client = MyClient()
@@ -34,6 +33,7 @@ tree = app_commands.CommandTree(client)
 guild = discord.Object(id=932077177875337278)
 
 classChoices = [Choice(name=className, value=className) for className in classNames.keys()]
+teamChoices = [Choice(name=className, value=className) for className in classNames.keys()]
 
 
 async def doNewGame(channel):
@@ -52,8 +52,8 @@ async def doStartGame(game):
     await game.startGame()
 
 
-async def doAddPlayer(game, user, _class):
-    return await game.addPlayer(user, _class)
+async def doAddPlayer(game, user, _class, team=None):
+    return await game.addPlayer(user, _class, team)
 
 
 def doInfo(game, user, _class):
@@ -111,13 +111,13 @@ async def endGame(interaction: discord.Interaction):
 
 
 @tree.command(name="join", description="Join the game in this channel.", guild=guild)
-@app_commands.choices(class_input = classChoices)
-async def join(interaction: discord.Interaction, class_input: str):
+@app_commands.choices(class_input=classChoices)
+async def join(interaction: discord.Interaction, class_input: str, team_input: Optional[Team]):
     # Player can specify class name or emoji
     _class = classEmojis.get(class_input)
     if not _class:
         _class = classNames.get(class_input.capitalize())
-    result = await doAddPlayer(games[interaction.channel], interaction.user, _class)
+    result = await doAddPlayer(games[interaction.channel], interaction.user, _class, team_input)
     if result:
         await interaction.response.send_message("Added player " + interaction.user.name + " as a " + _class.className())
     else:
@@ -126,7 +126,7 @@ async def join(interaction: discord.Interaction, class_input: str):
 
 @tree.command(name="info", description="View info and abilities for a specific class. "
                                        "Specify no class to view your current class.", guild=guild)
-@app_commands.choices(class_input = classChoices)
+@app_commands.choices(class_input=classChoices)
 async def info(interaction: discord.Interaction, class_input: Optional[str] = None):
     # Player can specify class name or emoji
     _class = classEmojis.get(class_input)

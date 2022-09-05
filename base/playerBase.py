@@ -4,6 +4,19 @@ from game.damageInstance import DamageInstance
 from game.gameEvents import *
 import math
 
+from enum import Enum
+
+
+class Team(Enum):
+    Orange = "🧡"
+    Yellow = "💛"
+    Green = "💚"
+    Blue = "💙"
+    Purple = "💜"
+    Black = "🖤"
+    Brown = "🤎"
+    White = "🤍"
+
 
 def toSub(x):
     normal = "0123456789"
@@ -38,7 +51,6 @@ class PlayerBase(EventSubscriber):
         self.modifiedAbilitiesLastTurn = []
 
         self.alive = True
-        self.curingClerics = []
         self.damageTaken = []  # List of DamageInstances
         self.damageDealt = []  # List of DamageInstances
 
@@ -66,6 +78,9 @@ class PlayerBase(EventSubscriber):
         toPrint += "**Ability 2: " + cls.ability2().abilityName() + "\n**"
         toPrint += cls.ability2().abilityDescription() + "\n"
         return toPrint
+
+    def setTeam(self, team):
+        self.team = team
 
     def doAbility(self, whichAbility, targets):
         abilityClass = self.ability1() if whichAbility == 1 else self.ability2()
@@ -134,7 +149,6 @@ class PlayerBase(EventSubscriber):
         self.takeDamageAddition = 0
         for effect in self.activeEffects:
             effect.decrementTurnsRemaining()
-        self.curingClerics.clear()
         self.damageTaken.clear()
         self.damageDealt.clear()
 
@@ -176,7 +190,11 @@ class PlayerBase(EventSubscriber):
         resourceNumber = self.resourceNumber()
         if resourceNumber:
             toReturn += toSub(str(resourceNumber))
-        toReturn += '❤️' + toSub(str(self.health))
+        heart = '❤'
+        if self.team:
+            heart = self.team.value
+        toReturn += heart
+        toReturn += toSub(str(self.health))
         toReturn += "<@" + str(self.user.id) + "> "
         for effect in self.activeEffects:
             toReturn += effect.effectEmoji() + toSub(str(effect.turnsRemaining))

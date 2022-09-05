@@ -43,7 +43,8 @@ class Game:
 
         self.playersActedThisTurn.clear()
         self.takingCommands = True
-        #
+
+        # debug
         # await self.enterAction(list(self.players.keys())[1], 2, [list(self.players.keys())[0]])
         #
         turnTimer = 0
@@ -79,14 +80,24 @@ class Game:
         await self.channel.send("\* \* \* \* \* \* \* \* \* \* \* \*")
         await self.printHealths()
         self.players = {user: player for user, player in self.players.items() if player.alive}
-        if len(self.players) == 1:
-            await self.channel.send(list(self.players.values())[0].toString() + "**wins!**")
-            await self.endGame()
-            return
+        teams = set([player.team for player in self.getPlayers()])
+        if len(teams) == 1:
+            # Only 1 team left! But it could be None if all players left are teamless
+            winningTeam = list(teams)[0]
+            if winningTeam is None:
+                if len(self.players) == 1:
+                    await self.channel.send(list(self.getPlayers())[0].toString() + "**wins!**")
+                    await self.endGame()
+                    return
+            else:
+                await self.channel.send("**" + winningTeam.name + " team wins!**")
+                await self.endGame()
+                return
 
-    async def addPlayer(self, user, _class):
+    async def addPlayer(self, user, _class, team=None):
         if not self.running:
             newPlayer = _class(user, self)
+            newPlayer.setTeam(team)
             self.players[user] = newPlayer
             return True
         return False
@@ -190,7 +201,7 @@ class Game:
         event.endEvent()
 
     async def printActions(self):
-        for player in self.getPlayers():
+        for player in self.getPlayersSortedByTeam():
             ability = player.activeAbilityLastTurn
             if ability:
                 targetsString = ", ".join([target.toString() for target in ability.targets])
@@ -200,7 +211,7 @@ class Game:
                 await self.channel.send(player.toString() + " skipped their turn")
 
     async def printHealths(self, doDrinks=True):
-        for player in self.players.values():
+        for player in self.getPlayersSortedByTeam():
             if not player.alive:
                 continue
             playerString = player.toString()
@@ -210,3 +221,6 @@ class Game:
 
     def getPlayers(self):
         return list(self.players.values())
+
+    def getPlayersSortedByTeam(self):
+        return sorted(self.getPlayers(), key=lambda p: p.team)
