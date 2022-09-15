@@ -22,7 +22,7 @@ class MyClient(discord.Client):
     async def on_ready(self):
         await self.wait_until_ready()
         if not self.synced:
-            await tree.sync(guild=guild)
+            await tree.sync(guild=None)
             self.synced = True
         print(f"Logged in as {self.user}")
         # await debugGame()
