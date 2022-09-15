@@ -9,6 +9,9 @@ from game.gameEvents import *
 class Druid(PlayerBase):
     def __init__(self, user, game):
         PlayerBase.__init__(self, user, game)
+        self.targetedByCount = 0
+
+        self.subscribeEvent(PhaseEndTurns, self.endTurns, 0)
 
     @classmethod
     def className(cls):
@@ -26,13 +29,13 @@ class Druid(PlayerBase):
         if self.hasEffect(WolfEffect):
             return Bite
         else:
-            return Howl
+            return EntanglingVines
 
     def ability2(self):
         if self.hasEffect(BearEffect):
             return Maul
         else:
-            return EntanglingVines
+            return Thornskin
 
     @classmethod
     def getInfo(cls):
@@ -60,6 +63,13 @@ class Druid(PlayerBase):
             toPrint += druid.ability2().abilityDescription() + "\n"
         return toPrint
 
+    def endTurns(self):
+        self.targetedByCount = 0
+        for player in self.game.getPlayers():
+            for action in player.getAllActiveAbilities():
+                if action and self in action.targets:
+                    self.targetedByCount += 1
+
 
 #######################################
 # Abilities
@@ -76,46 +86,32 @@ class Bite(AbilityBase):
 
     @classmethod
     def abilityDescription(cls):
-        return "Basic attack that deals 1 damage. Deals 3 damage if you are not targeted by any player this turn."
+        return "Basic attack that deals 1 damage. Deals 3 damage if you are not targeted by any player last turn."
 
     def damageEffect(self, event):
-        bonusDamage = 2
-        for player in self.game.getPlayers():
-            for action in player.getAllActiveAbilities():
-                if action and self.caster in action.targets:
-                    bonusDamage = 0
-                    break
-            if bonusDamage == 0:
-                break
+        bonusDamage = 0
+        if self.caster.targetedByCount == 0:
+            bonusDamage = 2
         self.caster.dealDamage(self.targets[0], 1 + bonusDamage)
 
 
-class Howl(AbilityBase):
+class EntanglingVines(AbilityBase):
     def __init__(self, caster: Druid, targets):
         AbilityBase.__init__(self, caster, targets)
 
-        self.subscribeEvent(PhaseApplyEffects, self.applyEffects, 0)
-        self.subscribeEvent(PhasePostDamage, self.postEffect, 0)
+        self.subscribeEvent(PhasePostDamage, self.postDamage, 0)
 
     @classmethod
     def abilityName(cls):
-        return "Howl"
+        return "Entangling Vines"
 
     @classmethod
     def abilityDescription(cls):
-        return "Switch to Wolf Form (🐺). Target gains Moonlit (🌙) next turn, making their attacks deal double damage."
+        return "Switch to Wolf Form (🐺). Entangle (🌿) your target, causing them to skip their next turn."
 
-    def applyEffects(self, event):
-        self.caster.removeEffect(BearEffect)
-        self.caster.addEffect(WolfEffect(self.caster, self.caster, 4))
-
-    def postEffect(self, event):
-        self.targets[0].removeEffect(MoonlitEffect)
-        self.targets[0].addEffect(MoonlitEffect(self.caster, self.caster, 2))
-
-    @classmethod
-    def canSelfTarget(cls):
-        return True
+    def postDamage(self, event):
+        self.targets[0].removeEffect(EntangledEffect)
+        self.targets[0].addEffect(EntangledEffect(self.caster, self.targets[0], 2))
 
 
 class Maul(AbilityBase):
@@ -131,7 +127,7 @@ class Maul(AbilityBase):
 
     @classmethod
     def abilityDescription(cls):
-        return "Target player uses their ability on you instead this turn. Deal damage to your target equal to the number of players who targetted you this turn."
+        return "Target player uses their ability on you instead this turn. Deal damage to your target equal to the number of players who targetted you last turn."
 
     def modifyActions(self, event):
         target = self.targets[0]
@@ -151,28 +147,29 @@ class Maul(AbilityBase):
         self.caster.dealDamage(self.targets[0], targetCount)
 
 
-class EntanglingVines(AbilityBase):
+class Thornskin(AbilityBase):
     def __init__(self, caster: Druid, targets):
         AbilityBase.__init__(self, caster, targets)
 
         self.subscribeEvent(PhaseApplyEffects, self.applyEffects, 0)
-        self.subscribeEvent(PhasePostDamage, self.postDamage, 0)
 
     @classmethod
     def abilityName(cls):
-        return "Entangling Vines"
+        return "Thornskin"
 
     @classmethod
     def abilityDescription(cls):
-        return "Switch to Bear Form (🐻). Entangle (🌿) your target, causing them to skip their next turn."
-
-    def postDamage(self, event):
-        self.targets[0].removeEffect(EntangledEffect)
-        self.targets[0].addEffect(EntangledEffect(self.caster, self.targets[0], 2))
+        return "Switch to Bear Form (🐻). Grow thorns (🌵) on your target, causing any players who target them to take 1 damage."
 
     def applyEffects(self, event):
+        self.targets[0].removeEffect(ThornskinEffect)
+        self.targets[0].addEffect(ThornskinEffect(self.caster, self.targets[0], 2))
         self.caster.removeEffect(WolfEffect)
         self.caster.addEffect(BearEffect(self.caster, self.caster, 4))
+
+    @classmethod
+    def canSelfTarget(cls):
+        return True
 
 
 #######################################
@@ -182,6 +179,8 @@ class WolfEffect(EffectBase):
     def __init__(self, caster, target, turnsRemaining):
         EffectBase.__init__(self, caster, target, turnsRemaining)
 
+        self.subscribeEvent(PhaseApplyEffects, self.applyEffects, 0)
+
     @classmethod
     def effectName(cls):
         return "Wolf"
@@ -189,6 +188,9 @@ class WolfEffect(EffectBase):
     @classmethod
     def effectEmoji(cls):
         return '🐺'
+
+    def applyEffects(self, event):
+        self.target.takeDamageAddition += 1
 
 
 class BearEffect(EffectBase):
@@ -206,26 +208,27 @@ class BearEffect(EffectBase):
         return '🐻'
 
     def applyEffects(self, event):
-        self.target.takeDamageAddition = -1
+        self.target.takeDamageAddition += -1
 
-
-class MoonlitEffect(EffectBase):
+class ThornskinEffect(EffectBase):
     def __init__(self, caster, target, turnsRemaining):
         EffectBase.__init__(self, caster, target, turnsRemaining)
 
-        self.subscribeEvent(PhaseApplyEffects, self.applyEffects, 0)
+        self.subscribeEvent(PhaseDealDamage, self.dealDamage, 0)
 
     @classmethod
     def effectName(cls):
-        return "Moonlit"
+        return "Thornskin"
 
     @classmethod
     def effectEmoji(cls):
-        return '🌙'
+        return '🌵'
 
-    def applyEffects(self, event):
-        self.target.dealDamageMultiplier *= 2
-
+    def dealDamage(self, event):
+        for player in self.game.getPlayers():
+            for action in player.getAllActiveAbilities():
+                if action and self.caster in action.targets:
+                    self.caster.dealDamage(player, 1, self)
 
 class EntangledEffect(EffectBase):
     def __init__(self, caster, target, turnsRemaining):

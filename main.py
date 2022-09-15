@@ -92,25 +92,25 @@ async def debugGame():
     await doStartGame(game)
 
 
-@tree.command(name="new_game", description="Create a new game.", guild=guild)
+@tree.command(name="new_game", description="Create a new game.")
 async def newGame(interaction: discord.Interaction):
     await interaction.response.send_message("Created game")
     await doNewGame(interaction.channel)
 
 
-@tree.command(name="start_game", description="Start the game.", guild=guild)
+@tree.command(name="start_game", description="Start the game.")
 async def startGame(interaction: discord.Interaction):
     await interaction.response.send_message("Game started!")
     await doStartGame(games[interaction.channel])
 
 
-@tree.command(name="end_game", description="End the game.", guild=guild)
+@tree.command(name="end_game", description="End the game.")
 async def endGame(interaction: discord.Interaction):
     await interaction.response.send_message("Game ended")
     await doEndGame(games[interaction.channel])
 
 
-@tree.command(name="join", description="Join the game in this channel.", guild=guild)
+@tree.command(name="join", description="Join the game in this channel.")
 @app_commands.choices(class_input=classChoices)
 async def join(interaction: discord.Interaction, class_input: str, team_input: Optional[Team]):
     # Player can specify class name or emoji
@@ -125,7 +125,7 @@ async def join(interaction: discord.Interaction, class_input: str, team_input: O
 
 
 @tree.command(name="info", description="View info and abilities for a specific class. "
-                                       "Specify no class to view your current class.", guild=guild)
+                                       "Specify no class to view your current class.")
 @app_commands.choices(class_input=classChoices)
 async def info(interaction: discord.Interaction, class_input: Optional[str] = None):
     # Player can specify class name or emoji
@@ -136,10 +136,12 @@ async def info(interaction: discord.Interaction, class_input: Optional[str] = No
     await interaction.response.send_message(toPrint, ephemeral=True)
 
 
-@tree.command(name="all_info", description="View all class info and abilities.", guild=guild)
+@tree.command(name="all_info", description="View all class info and abilities.")
 async def allInfo(interaction: discord.Interaction):
-    await interaction.response.send_message("Printing all info", ephemeral=True)
-    await doAllInfo(interaction.channel)
+    if interaction.user.guild_permissions.administrator:
+        await interaction.response.send_message("Printing all info", ephemeral=True)
+        await doAllInfo(interaction.channel)
+    await interaction.response.send_message("Only administrators can use this command", ephemeral=True)
 
 
 async def respondToAction(interaction: discord.Interaction, succeeded, message):
@@ -148,19 +150,19 @@ async def respondToAction(interaction: discord.Interaction, succeeded, message):
     await interaction.response.send_message(message, ephemeral=True)
 
 
-@tree.command(name="1", description="Use ability 1.", guild=guild)
+@tree.command(name="1", description="Use ability 1.")
 async def ability1(interaction: discord.Interaction, target: Optional[discord.User]):
     succeeded, message = await doAbility(games[interaction.channel], interaction.user, 1, [target])
     await respondToAction(interaction, succeeded, message)
 
 
-@tree.command(name="2", description="Use ability 2.", guild=guild)
+@tree.command(name="2", description="Use ability 2.")
 async def ability2(interaction: discord.Interaction, target: Optional[discord.User]):
     succeeded, message = await doAbility(games[interaction.channel], interaction.user, 2, [target])
     await respondToAction(interaction, succeeded, message)
 
 
-@tree.command(name="skip", description="Skip your turn.", guild=guild)
+@tree.command(name="skip", description="Skip your turn.")
 async def skipTurn(interaction: discord.Interaction):
     succeeded, message = await doSkipTurn(games[interaction.channel], interaction.user)
     await respondToAction(interaction, succeeded, message)
