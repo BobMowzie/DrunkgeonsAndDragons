@@ -140,7 +140,6 @@ class Game:
 
         targetPlayers = []
         for target in targets:
-            print(targets)
             if not target:
                 continue
             if target in self.deadPlayers:

@@ -1,5 +1,3 @@
-from copy import deepcopy
-
 from base.playerBase import PlayerBase
 from base.abilityBase import AbilityBase
 from base.effectBase import EffectBase
@@ -70,6 +68,9 @@ class Druid(PlayerBase):
                 if action and self in action.targets:
                     self.targetedByCount += 1
 
+    def resourceNumber(self):
+        return self.targetedByCount
+
 
 #######################################
 # Abilities
@@ -99,6 +100,7 @@ class EntanglingVines(AbilityBase):
     def __init__(self, caster: Druid, targets):
         AbilityBase.__init__(self, caster, targets)
 
+        self.subscribeEvent(PhaseApplyEffects, self.applyEffects, 0)
         self.subscribeEvent(PhasePostDamage, self.postDamage, 0)
 
     @classmethod
@@ -108,6 +110,10 @@ class EntanglingVines(AbilityBase):
     @classmethod
     def abilityDescription(cls):
         return "Switch to Wolf Form (🐺). Entangle (🌿) your target, causing them to skip their next turn."
+
+    def applyEffects(self, event):
+        self.caster.removeEffect(BearEffect)
+        self.caster.addEffect(WolfEffect(self.caster, self.caster, 4))
 
     def postDamage(self, event):
         self.targets[0].removeEffect(EntangledEffect)
@@ -131,19 +137,16 @@ class Maul(AbilityBase):
 
     def modifyActions(self, event):
         target = self.targets[0]
-        abilityCopy = deepcopy(target.activeAbility)
-        abilityCopy.targets = [self.caster]
-        target.modifiedAbilities.append(abilityCopy)
-        target.activeAbility.canceled = True
+        # NEED FIX FOR WHEN TWO MAULS ON SAME TARGET, THIS DOES NOT WORK
+        # abilityCopy = copy.copy(target.activeAbility)
+        # abilityCopy.targets = [self.caster]
+        # target.modifiedAbilities.append(abilityCopy)
+        # target.activeAbility.canceled = True
+        if target.activeAbility:
+            target.activeAbility.targets = [self.caster]
 
     def damageEffect(self, event):
-        targetCount = 0
-        for player in self.caster.game.getPlayers():
-            actions = player.modifiedAbilities
-            for action in actions:
-                if action and self.caster in action.targets:
-                    targetCount += 1
-                    break
+        targetCount = self.caster.targetedByCount
         self.caster.dealDamage(self.targets[0], targetCount)
 
 
@@ -159,7 +162,7 @@ class Thornskin(AbilityBase):
 
     @classmethod
     def abilityDescription(cls):
-        return "Switch to Bear Form (🐻). Grow thorns (🌵) on your target, causing any players who target them to take 1 damage."
+        return "Switch to Bear Form (🐻). Grow thorns (🌵) on your target for 2 turns, causing any players who target them to take 1 damage."
 
     def applyEffects(self, event):
         self.targets[0].removeEffect(ThornskinEffect)
@@ -226,6 +229,8 @@ class ThornskinEffect(EffectBase):
 
     def dealDamage(self, event):
         for player in self.game.getPlayers():
+            if player == self.caster:
+                continue
             for action in player.getAllActiveAbilities():
                 if action and self.caster in action.targets:
                     self.caster.dealDamage(player, 1, self)
@@ -245,4 +250,5 @@ class EntangledEffect(EffectBase):
         return '🌿'
 
     def modifyActions(self, event):
-        self.target.activeAbility.canceled = True
+        if self.target.activeAbility:
+            self.target.activeAbility.canceled = True
