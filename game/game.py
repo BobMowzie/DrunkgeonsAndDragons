@@ -80,6 +80,10 @@ class Game:
         await self.channel.send("\* \* \* \* \* \* \* \* \* \* \* \*")
         await self.printHealths()
         self.players = {user: player for user, player in self.players.items() if player.alive}
+        if len(self.players) == 0:
+            await self.channel.send("**Draw!**")
+            await self.endGame()
+            return
         teams = set([player.team for player in self.getPlayers()])
         if len(teams) == 1:
             # Only 1 team left! But it could be None if all players left are teamless
