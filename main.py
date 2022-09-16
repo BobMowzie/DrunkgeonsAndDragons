@@ -25,7 +25,7 @@ class MyClient(discord.Client):
             await tree.sync(guild=None)
             self.synced = True
         print(f"Logged in as {self.user}")
-        await debugGame()
+        # await debugGame()
 
 
 client = MyClient()
@@ -113,21 +113,31 @@ async def endGame(interaction: discord.Interaction):
 @tree.command(name="join", description="Join the game in this channel.")
 @app_commands.choices(class_input=classChoices)
 async def join(interaction: discord.Interaction, class_input: str, team_input: Optional[Team]):
+    game = games.get(interaction.channel)
+    if not game:
+        await interaction.channel.send("Created game")
+        await doNewGame(interaction.channel)
     # Player can specify class name or emoji
     _class = classEmojis.get(class_input)
     if not _class:
         _class = classNames.get(class_input.capitalize())
     result = await doAddPlayer(games[interaction.channel], interaction.user, _class, team_input)
     if result:
-        await interaction.response.send_message("Added player " + interaction.user.name + " as a " + _class.className())
+        message = "Added player " + interaction.user.name + " as a " + _class.className()
+        if team_input:
+            message = message + " on team " + team_input.name
+        await interaction.response.send_message(message)
     else:
-        await interaction.response.send_message("Can't join. Game is already running.")
+        await interaction.response.send_message("Can't join. Game is already running.", ephemeral=True)
 
 
 @tree.command(name="info", description="View info and abilities for a specific class. "
                                        "Specify no class to view your current class.")
 @app_commands.choices(class_input=classChoices)
 async def info(interaction: discord.Interaction, class_input: Optional[str] = None):
+    game = games.get(interaction.channel)
+    if not game:
+        await interaction.response.send_message("No game in this channel. Create one with /new_game.", ephemeral=True)
     # Player can specify class name or emoji
     _class = None
     if class_input:

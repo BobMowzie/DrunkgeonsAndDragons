@@ -35,6 +35,10 @@ class Game:
 
     async def endGame(self):
         self.running = False
+        self.players.clear()
+        self.deadPlayers.clear()
+        self.turns = 1
+        self.playersActedThisTurn = set()
 
     async def gameLoop(self):
         await self.channel.send("\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_")
@@ -229,4 +233,4 @@ class Game:
         return list(self.players.values())
 
     def getPlayersSortedByTeam(self):
-        return sorted(self.getPlayers(), key=lambda p: p.team if p.team else 0)
+        return sorted(self.getPlayers(), key=lambda p: p.team.value if p.team else 0)
