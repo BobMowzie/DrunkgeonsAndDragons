@@ -25,7 +25,7 @@ class MyClient(discord.Client):
             await tree.sync(guild=None)
             self.synced = True
         print(f"Logged in as {self.user}")
-        # await debugGame()
+        await debugGame()
 
 
 client = MyClient()
@@ -87,7 +87,7 @@ async def debugGame():
     bobmowzieUser = thisGuild.get_member(301435749729828867)
     caesicCultistUser = thisGuild.get_member(747871773282009420)
     game = await doNewGame(channel)
-    await doAddPlayer(game, bobmowzieUser, classNames['Warlock'])
+    await doAddPlayer(game, bobmowzieUser, classNames['Barbarian'])
     await doAddPlayer(game, caesicCultistUser, classNames['Warlock'])
     await doStartGame(game)
 
@@ -129,9 +129,11 @@ async def join(interaction: discord.Interaction, class_input: str, team_input: O
 @app_commands.choices(class_input=classChoices)
 async def info(interaction: discord.Interaction, class_input: Optional[str] = None):
     # Player can specify class name or emoji
-    _class = classEmojis.get(class_input)
-    if not _class:
-        _class = classNames.get(class_input.capitalize())
+    _class = None
+    if class_input:
+        _class = classEmojis.get(class_input)
+        if not _class:
+            _class = classNames.get(class_input.capitalize())
     toPrint = doInfo(games[interaction.channel], interaction.user, _class)
     await interaction.response.send_message(toPrint, ephemeral=True)
 

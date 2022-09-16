@@ -110,6 +110,10 @@ class Enrage(AbilityBase):
     def minNumTargets(cls):
         return 0
 
+    @classmethod
+    def canSelfTarget(cls):
+        return True
+
 
 #######################################
 # Effects

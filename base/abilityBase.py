@@ -20,11 +20,12 @@ class AbilityBase(EventSubscriber):
         return ''
 
     def canUse(self):
+        print(self.targets)
         numTargets = len(self.targets)
         if numTargets > self.maxNumTargets():
             return False, "Too many targets for ability **" + self.abilityName()\
                    + "**. Given " + str(numTargets) + ", maximum is " + str(self.maxNumTargets()) + "."
-        if numTargets > self.minNumTargets():
+        if numTargets < self.minNumTargets():
             return False, "Too few targets for ability **" + self.abilityName()\
                    + "**. Given " + str(numTargets) + ", minimum is " + str(self.minNumTargets()) + "."
         if not self.canSelfTarget():

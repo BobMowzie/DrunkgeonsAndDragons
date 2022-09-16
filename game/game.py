@@ -12,7 +12,7 @@ class Game:
 
         self.channel = channel
         self.players = {}
-        self.deadPlayers = {}
+        self.deadPlayers = []
         self.running = False
         self.turns = 1
         self.takingCommands = False
@@ -140,6 +140,9 @@ class Game:
 
         targetPlayers = []
         for target in targets:
+            print(targets)
+            if not target:
+                continue
             if target in self.deadPlayers:
                 return False, f"{target.name} is dead and cannot be targeted."
             targetPlayer = self.players.get(target)
@@ -216,11 +219,11 @@ class Game:
                 continue
             playerString = player.toString()
             if doDrinks:
-                playerString += " drink " + str(player.damageTakenLastTurn)
+                playerString += " took " + str(player.damageTakenLastTurn) + " damage"
             await self.channel.send(playerString)
 
     def getPlayers(self):
         return list(self.players.values())
 
     def getPlayersSortedByTeam(self):
-        return sorted(self.getPlayers(), key=lambda p: p.team)
+        return sorted(self.getPlayers(), key=lambda p: p.team if p.team else 0)

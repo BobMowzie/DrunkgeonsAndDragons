@@ -86,7 +86,7 @@ class PlayerBase(EventSubscriber):
         abilityClass = self.ability1() if whichAbility == 1 else self.ability2()
         ability = abilityClass(self, targets)
         canUse, message = ability.canUse()
-        targetNames = [target.toString() for target in targets]
+        targetNames = [target.toString() for target in ability.targets]
         if canUse:
             self.activeAbility = ability
             message = "Using ability **" + ability.abilityName() + "** on " + ", ".join(targetNames) + "."

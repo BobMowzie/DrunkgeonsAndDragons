@@ -63,7 +63,7 @@ class Druid(PlayerBase):
             toPrint += druid.ability2().abilityDescription() + "\n"
         return toPrint
 
-    def endTurns(self):
+    def endTurns(self, event):
         self.targetedByCount = 0
         for player in self.game.getPlayers():
             for action in player.getAllActiveAbilities():
