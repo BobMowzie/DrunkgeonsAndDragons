@@ -233,4 +233,4 @@ class Game:
         return list(self.players.values())
 
     def getPlayersSortedByTeam(self):
-        return sorted(self.getPlayers(), key=lambda p: p.team.value if p.team else 0)
+        return sorted(self.getPlayers(), key=lambda p: p.team.value if p.team else "")

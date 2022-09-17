@@ -182,8 +182,6 @@ class WolfEffect(EffectBase):
     def __init__(self, caster, target, turnsRemaining):
         EffectBase.__init__(self, caster, target, turnsRemaining)
 
-        self.subscribeEvent(PhaseApplyEffects, self.applyEffects, 0)
-
     @classmethod
     def effectName(cls):
         return "Wolf"
@@ -192,15 +190,10 @@ class WolfEffect(EffectBase):
     def effectEmoji(cls):
         return '🐺'
 
-    def applyEffects(self, event):
-        self.target.takeDamageAddition += 1
-
 
 class BearEffect(EffectBase):
     def __init__(self, caster, target, turnsRemaining):
         EffectBase.__init__(self, caster, target, turnsRemaining)
-
-        self.subscribeEvent(PhaseApplyEffects, self.applyEffects, 0)
 
     @classmethod
     def effectName(cls):
@@ -209,9 +202,6 @@ class BearEffect(EffectBase):
     @classmethod
     def effectEmoji(cls):
         return '🐻'
-
-    def applyEffects(self, event):
-        self.target.takeDamageAddition += -1
 
 class ThornskinEffect(EffectBase):
     def __init__(self, caster, target, turnsRemaining):
