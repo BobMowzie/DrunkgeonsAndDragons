@@ -56,6 +56,10 @@ async def doAddPlayer(game, user, _class, team=None):
     return await game.addPlayer(user, _class, team)
 
 
+async def doRemovePlayer(game, user):
+    return await game.removePlayer(user)
+
+
 def doInfo(game, user, _class):
     return game.info(user, _class)
 
@@ -100,14 +104,25 @@ async def newGame(interaction: discord.Interaction):
 
 @tree.command(name="start_game", description="Start the game.")
 async def startGame(interaction: discord.Interaction):
-    await interaction.response.send_message("Game started!")
-    await doStartGame(games[interaction.channel])
+    game = games.get(interaction.channel)
+    if game:
+        if len(game.players) == 0:
+            await interaction.response.send_message("No players have joined! Join with /join.", ephemeral=True)
+        else:
+            await interaction.response.send_message("Game started!")
+            await doStartGame(game)
+    else:
+        await interaction.response.send_message("No game in this channel. Create one with /new_game.", ephemeral=True)
 
 
 @tree.command(name="end_game", description="End the game.")
 async def endGame(interaction: discord.Interaction):
-    await interaction.response.send_message("Game ended")
-    await doEndGame(games[interaction.channel])
+    game = games.get(interaction.channel)
+    if game:
+        await interaction.response.send_message("Game ended")
+        await doEndGame(game)
+    else:
+        await interaction.response.send_message("No game in this channel. Create one with /new_game.", ephemeral=True)
 
 
 @tree.command(name="join", description="Join the game in this channel.")
@@ -129,6 +144,17 @@ async def join(interaction: discord.Interaction, class_input: str, team_input: O
         await interaction.response.send_message(message)
     else:
         await interaction.response.send_message("Can't join. Game is already running.", ephemeral=True)
+
+
+@tree.command(name="leave", description="Leave the game.")
+async def leave(interaction: discord.Interaction):
+    game = games.get(interaction.channel)
+    if not game:
+        await interaction.response.send_message("No game in this channel. Create one with /new_game.", ephemeral=True)
+    result = await doRemovePlayer(game, interaction.user)
+    if result:
+        message = "Removed player " + interaction.user.name
+        await interaction.response.send_message(message)
 
 
 @tree.command(name="info", description="View info and abilities for a specific class. "

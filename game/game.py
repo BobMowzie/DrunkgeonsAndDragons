@@ -110,6 +110,15 @@ class Game:
             return True
         return False
 
+    async def removePlayer(self, user):
+        if user in self.players.keys():
+            del self.players[user]
+            return True
+        elif user in self.deadPlayers:
+            del self.deadPlayers[user]
+            return True
+        return False
+
     def info(self, user, _class):
         if not _class:
             player = self.players.get(user)
@@ -222,12 +231,12 @@ class Game:
 
     async def printHealths(self, doDrinks=True):
         for player in self.getPlayersSortedByTeam():
-            if not player.alive:
-                continue
             playerString = player.toString()
-            if doDrinks:
-                playerString += " took " + str(player.damageTakenLastTurn) + " damage"
-            await self.channel.send(playerString)
+            damageMsg = playerString + " took " + str(player.damageTakenLastTurn) + " damage"
+            await self.channel.send(damageMsg)
+            if not player.alive:
+                deathMsg = playerString + " **died!**"
+                await self.channel.send(deathMsg)
 
     def getPlayers(self):
         return list(self.players.values())
