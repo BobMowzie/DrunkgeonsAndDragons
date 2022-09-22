@@ -108,6 +108,8 @@ async def startGame(interaction: discord.Interaction):
     if game:
         if len(game.players) == 0:
             await interaction.response.send_message("No players have joined! Join with /join.", ephemeral=True)
+        elif game.running:
+            await interaction.response.send_message("Game is already running!", ephemeral=True)
         else:
             await interaction.response.send_message("Game started!")
             await doStartGame(game)
@@ -121,6 +123,7 @@ async def endGame(interaction: discord.Interaction):
     if game:
         await interaction.response.send_message("Game ended")
         await doEndGame(game)
+        del games[interaction.channel]
     else:
         await interaction.response.send_message("No game in this channel. Create one with /new_game.", ephemeral=True)
 

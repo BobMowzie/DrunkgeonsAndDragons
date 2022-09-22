@@ -27,9 +27,11 @@ class Game:
         await self.channel.send(classMessage)
 
     async def startGame(self):
+        if self.running:
+            return
+        self.running = True
         await self.channel.send("\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_")
         await self.printHealths(False)
-        self.running = True
         while self.running:
             await self.gameLoop()
 
