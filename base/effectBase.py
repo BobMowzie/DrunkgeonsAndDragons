@@ -12,6 +12,7 @@ class EffectBase(EventSubscriber):
         self.target = target
         self.turnsRemaining = turnsRemaining
         self.timed = True
+        self.hasTurnsRemaining = True
 
     @classmethod
     def effectName(cls):

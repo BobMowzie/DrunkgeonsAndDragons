@@ -225,9 +225,12 @@ class Game:
         for player in self.getPlayersSortedByTeam():
             ability = player.activeAbilityLastTurn
             if ability:
-                targetsString = ", ".join([target.toString() for target in ability.targets])
-                await self.channel.send(
-                    player.toString() + " used ability **" + ability.abilityName() + "** on " + targetsString)
+                message = player.toString() + " used ability **" + ability.abilityName() + "**"
+                if len(ability.targets) > 0:
+                    targetsString = ", ".join([target.toString() for target in ability.targets])
+                    message += " on " + targetsString
+                await self.channel.send(message)
+
             else:
                 await self.channel.send(player.toString() + " skipped their turn")
 

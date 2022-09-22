@@ -89,7 +89,9 @@ class PlayerBase(EventSubscriber):
         targetNames = [target.toString() for target in ability.targets]
         if canUse:
             self.activeAbility = ability
-            message = "Using ability **" + ability.abilityName() + "** on " + ", ".join(targetNames) + "."
+            message = "Using ability **" + ability.abilityName() + "**"
+            if len(targetNames) > 0:
+                message += " on " + ", ".join(targetNames) + "."
         return canUse, message
 
     def getAllActiveAbilities(self):
@@ -99,7 +101,7 @@ class PlayerBase(EventSubscriber):
         return abilities
 
     def startTurn(self, event):
-        self.activeEffects = [effect for effect in self.activeEffects if effect.turnsRemaining > 0]
+        self.activeEffects = [effect for effect in self.activeEffects if effect.turnsRemaining > 0 or not effect.hasTurnsRemaining]
 
     def adjustDealDamage(self, event):
         if event.damageInstance.attacker == self:
@@ -172,6 +174,9 @@ class PlayerBase(EventSubscriber):
             if isinstance(effect, effectType):
                 return effect
 
+    def getAllEffectsOfType(self, effectType):
+        return [effect for effect in self.activeEffects if isinstance(effect, effectType)]
+
     def removeEffect(self, effectType):
         self.activeEffects = [effect for effect in self.activeEffects if not isinstance(effect, effectType)]
 
@@ -197,7 +202,9 @@ class PlayerBase(EventSubscriber):
         toReturn += toSub(str(self.health))
         toReturn += "<@" + str(self.user.id) + "> "
         for effect in self.activeEffects:
-            toReturn += effect.effectEmoji() + toSub(str(effect.turnsRemaining))
+            toReturn += effect.effectEmoji()
+            if effect.hasTurnsRemaining:
+                toReturn += toSub(str(effect.turnsRemaining))
         return toReturn
 
     def resourceNumber(self):
@@ -210,6 +217,7 @@ from classes.wizard import Wizard
 from classes.cleric import Cleric
 from classes.druid import Druid
 from classes.warlock import Warlock
+from classes.blademaster import Blademaster
 
 classEmojis = {
     Barbarian.classEmoji(): Barbarian,
@@ -217,7 +225,8 @@ classEmojis = {
     Wizard.classEmoji(): Wizard,
     Cleric.classEmoji(): Cleric,
     Druid.classEmoji(): Druid,
-    Warlock.classEmoji(): Warlock
+    Warlock.classEmoji(): Warlock,
+    Blademaster.classEmoji(): Blademaster
 }
 
 classNames = {
@@ -226,5 +235,6 @@ classNames = {
     Wizard.className(): Wizard,
     Cleric.className(): Cleric,
     Druid.className(): Druid,
-    Warlock.className(): Warlock
+    Warlock.className(): Warlock,
+    Blademaster.className(): Blademaster
 }
