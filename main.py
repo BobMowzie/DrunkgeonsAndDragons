@@ -60,6 +60,10 @@ async def doRemovePlayer(game, user):
     return await game.removePlayer(user)
 
 
+async def doVotekick(game, user, target):
+    return await game.votekick(user, target)
+
+
 def doInfo(game, user, _class):
     return game.info(user, _class)
 
@@ -158,6 +162,29 @@ async def leave(interaction: discord.Interaction):
     if result:
         message = "Removed player " + interaction.user.name
         await interaction.response.send_message(message)
+
+
+@tree.command(name="kick", description="Kick player from the game.")
+async def kick(interaction: discord.Interaction, target: discord.User):
+    if interaction.user.guild_permissions.administrator:
+        game = games.get(interaction.channel)
+        if not game:
+            await interaction.response.send_message("No game in this channel. Create one with /new_game.", ephemeral=True)
+        result = await doRemovePlayer(game, target)
+        if result:
+            message = "Removed player " + target.name
+            await interaction.response.send_message(message)
+    else:
+        await interaction.response.send_message("Only administrators can use this command", ephemeral=True)
+
+
+@tree.command(name="votekick", description="Vote to kick player from the game.")
+async def votekick(interaction: discord.Interaction, target: discord.User):
+    game: Game = games.get(interaction.channel)
+    if not game:
+        await interaction.response.send_message("No game in this channel. Create one with /new_game.", ephemeral=True)
+    succeeded, message = await doVotekick(game, interaction.user, target)
+    await interaction.response.send_message(message, ephemeral=(not succeeded))
 
 
 @tree.command(name="info", description="View info and abilities for a specific class. "

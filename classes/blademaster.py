@@ -15,7 +15,7 @@ class Blademaster(PlayerBase):
 
     @classmethod
     def classEmoji(cls):
-        return '⚔'
+        return '⚔️'
 
     @classmethod
     def classDescription(cls):

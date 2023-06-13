@@ -1,5 +1,6 @@
 import asyncio
 import itertools
+import math
 
 from base.playerBase import classEmojis, PlayerBase
 from game.gameEvents import *
@@ -104,6 +105,17 @@ class Game:
                 await self.endGame()
                 return
 
+    def hasPlayer(self, user):
+        return user in self.players.keys() or user in self.deadPlayers
+
+    def getPlayerFromUser(self, user):
+        player: PlayerBase = None
+        if user in self.players.keys():
+            player = self.players[user]
+        elif user in self.deadPlayers:
+            player = self.deadPlayers[user]
+        return player
+
     async def addPlayer(self, user, _class, team=None):
         if not self.running:
             newPlayer = _class(user, self)
@@ -120,6 +132,21 @@ class Game:
             del self.deadPlayers[user]
             return True
         return False
+
+    async def votekick(self, user, target):
+        userPlayer: PlayerBase = self.getPlayerFromUser(user)
+        if not userPlayer:
+            return False, "User not in game"
+        targetPlayer: PlayerBase = self.getPlayerFromUser(target)
+        if targetPlayer:
+            targetPlayer.votekicks = {u for u in targetPlayer.votekicks if self.hasPlayer(u)}
+            targetPlayer.votekicks.add(user)
+            neededVotes = math.ceil(2.0 * (len(self.players) + len(self.deadPlayers)) / 3.0)
+            if len(targetPlayer.votekicks) >= neededVotes:
+                await self.removePlayer(user)
+                return True, "Kicked player " + target.name
+            return True, "Votekick progress for " + target.name + ": " + str(len(targetPlayer.votekicks)) + "/" + str(neededVotes)
+        return False, "Target not in game"
 
     def info(self, user, _class):
         if not _class:

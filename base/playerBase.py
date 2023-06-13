@@ -32,6 +32,9 @@ class PlayerBase(EventSubscriber):
         super().__init__()
         self.user = user
         self.game = game
+
+        self.votekicks = {}
+
         self.team = None
         self.health = 15
         self.damageTakenThisTurn = 0
