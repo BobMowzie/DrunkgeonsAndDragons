@@ -87,7 +87,7 @@ class Bite(AbilityBase):
 
     @classmethod
     def abilityDescription(cls):
-        return "Basic attack that deals 1 damage. Deals 3 damage if you are not targeted by any player last turn."
+        return "Basic attack that deals 1 damage. Deals 3 damage if you were not targeted by any player last turn."
 
     def damageEffect(self, event):
         bonusDamage = 0
@@ -125,6 +125,7 @@ class Maul(AbilityBase):
         AbilityBase.__init__(self, caster, targets)
 
         self.subscribeEvent(PhaseModifyActions, self.modifyActions, 0)
+        self.subscribeEvent(PhaseModifyActions, self.cancelActiveAbility, 1)
         self.subscribeEvent(PhaseDealDamage, self.damageEffect, 0)
 
     @classmethod
@@ -137,13 +138,14 @@ class Maul(AbilityBase):
 
     def modifyActions(self, event):
         target = self.targets[0]
-        # NEED FIX FOR WHEN TWO MAULS ON SAME TARGET, THIS DOES NOT WORK
-        # abilityCopy = copy.copy(target.activeAbility)
-        # abilityCopy.targets = [self.caster]
-        # target.modifiedAbilities.append(abilityCopy)
-        # target.activeAbility.canceled = True
-        if target.activeAbility:
-            target.activeAbility.targets = [self.caster]
+        abilityCopy = copy.copy(target.activeAbility)
+        abilityCopy.targets = [self.caster]
+        target.modifiedAbilities.append(abilityCopy)
+
+    # Cancel active ability only after all Maul abilities have copied it
+    def cancelActiveAbility(self, event):
+        target = self.targets[0]
+        target.activeAbility.canceled = True
 
     def damageEffect(self, event):
         targetCount = self.caster.targetedByCount
@@ -242,3 +244,6 @@ class EntangledEffect(EffectBase):
     def modifyActions(self, event):
         if self.target.activeAbility:
             self.target.activeAbility.canceled = True
+        for ability in self.target.modifiedAbilities:
+            ability.canceled = True
+

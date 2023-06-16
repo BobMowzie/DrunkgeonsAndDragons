@@ -84,7 +84,7 @@ class DivineBarrier(AbilityBase):
 
     @classmethod
     def abilityDescription(cls):
-        return "Expend all blessings to create a Divine Barrier (✝) on a target. For however many blessings spent, the barrier blocks that many hits of damage (smallest first)."
+        return "Expend all blessings to create a Divine Barrier (✝️) on a target. For however many blessings spent, the barrier blocks that many hits of damage (smallest first)."
 
     def applyEffects(self, event):
         target = self.targets[0]
