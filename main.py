@@ -4,6 +4,8 @@ from typing import List, Sequence, Optional
 import discord
 from discord import app_commands
 from discord.app_commands import Choice
+
+from debug.debugUser import DebugUser
 from game.game import Game
 from base.playerBase import classEmojis, classNames, Team
 
@@ -25,7 +27,7 @@ class MyClient(discord.Client):
             await tree.sync(guild=None)
             self.synced = True
         print(f"Logged in as {self.user}")
-        # await debugGame()
+        await debugGame()
 
 
 client = MyClient()
@@ -95,8 +97,11 @@ async def debugGame():
     bobmowzieUser = thisGuild.get_member(301435749729828867)
     caesicCultistUser = thisGuild.get_member(747871773282009420)
     game = await doNewGame(channel)
-    await doAddPlayer(game, bobmowzieUser, classNames['Barbarian'])
-    await doAddPlayer(game, caesicCultistUser, classNames['Druid'])
+    # await doAddPlayer(game, bobmowzieUser, classNames['Barbarian'])
+    # await doAddPlayer(game, caesicCultistUser, classNames['Druid'])
+    for i in range(6):
+        debugUser = DebugUser(game, f"DebugUser{i}")
+        await debugUser.addToGame()
     await doStartGame(game)
 
 

@@ -3,22 +3,27 @@ import itertools
 import math
 
 from base.playerBase import classEmojis, PlayerBase
+from debug.debugUser import DebugUser
 from game.gameEvents import *
+from lich.lich import Lich
+
 
 class Game:
     """A running instance of the game"""
 
     def __init__(self, channel):
-        self.maxTurnLength = 90
+        self.maxTurnLength = 20
 
         self.channel = channel
         self.players = {}
-        self.deadPlayers = []
+        self.deadPlayers = {}
         self.running = False
         self.turns = 1
         self.takingCommands = False
 
         self.playersActedThisTurn = set()
+
+        self.lich = None
 
     async def newGame(self):
         classMessage = "Type /join followed by a class name to join!"
@@ -48,17 +53,32 @@ class Game:
         await self.channel.send("**Turn " + str(self.turns) + "**")
         self.turns += 1
 
+        if len(self.deadPlayers) > 0 and not self.lich:
+            self.lich = Lich(self)
+            await self.channel.send("The " + Lich.icon() + "Lich appeared!")
+
+        if self.lich:
+            self.lich.randomizeAbilities()
+            await self.lich.printOptions()
+
         self.playersActedThisTurn.clear()
         self.takingCommands = True
 
         # debug
         # await self.enterAction(list(self.players.keys())[1], 2, [list(self.players.keys())[0]])
         #
+        for user in self.players.keys():
+            if isinstance(user, DebugUser):
+                await user.chooseAbility()
+        for user in self.deadPlayers.keys():
+            if isinstance(user, DebugUser):
+                await user.chooseAbility()
+
         turnTimer = 0
         while turnTimer < self.maxTurnLength:
             await asyncio.sleep(1)
             turnTimer += 1
-            if len(self.playersActedThisTurn) == len(self.players):
+            if len(self.playersActedThisTurn) >= len(self.players) + len(self.deadPlayers):
                 break
         await asyncio.sleep(5)
 
@@ -66,6 +86,9 @@ class Game:
         if not self.running:
             return
         await self.channel.send("\* \* \* \* \* \* \* \* \* \* \* \*")
+
+        if self.lich:
+            self.lich.chooseAbility()
 
         phases = [
             PhaseStartTurns(self),
@@ -80,24 +103,31 @@ class Game:
         for phase in phases:
             self.doEvent(phase)
 
-        for player in self.getPlayers():
+        #DEBUG
+        if self.turns == 2:
+            list(self.players.values())[0].die()
+            list(self.players.values())[1].die()
+            list(self.players.values())[2].die()
+
+        for player in self.getLivingPlayers():
             player.resetPlayer()
 
         await self.printActions()
         await self.channel.send("\* \* \* \* \* \* \* \* \* \* \* \*")
         await self.printHealths()
+
         self.players = {user: player for user, player in self.players.items() if player.alive}
         if len(self.players) == 0:
             await self.channel.send("**Draw!**")
             await self.endGame()
             return
-        teams = set([player.team for player in self.getPlayers()])
+        teams = set([player.team for player in self.getLivingPlayers()])
         if len(teams) == 1:
             # Only 1 team left! But it could be None if all players left are teamless
             winningTeam = list(teams)[0]
             if winningTeam is None:
                 if len(self.players) == 1:
-                    await self.channel.send(list(self.getPlayers())[0].toString() + "**wins!**")
+                    await self.channel.send(list(self.getLivingPlayers())[0].toString() + "**wins!**")
                     await self.endGame()
                     return
             else:
@@ -105,14 +135,17 @@ class Game:
                 await self.endGame()
                 return
 
+        if self.lich:
+            self.lich.reset()
+
     def hasPlayer(self, user):
-        return user in self.players.keys() or user in self.deadPlayers
+        return user in self.players.keys() or user in self.deadPlayers.keys()
 
     def getPlayerFromUser(self, user):
         player: PlayerBase = None
         if user in self.players.keys():
             player = self.players[user]
-        elif user in self.deadPlayers:
+        elif user in self.deadPlayers.keys():
             player = self.deadPlayers[user]
         return player
 
@@ -128,7 +161,7 @@ class Game:
         if user in self.players.keys():
             del self.players[user]
             return True
-        elif user in self.deadPlayers:
+        elif user in self.deadPlayers.keys():
             del self.deadPlayers[user]
             return True
         return False
@@ -159,15 +192,20 @@ class Game:
         return toPrint
 
     async def printEnteredAction(self, player):
-        await self.channel.send(player.toString() + " entered their action.")
+        if player.alive:
+            await self.channel.send(player.toString() + " entered their action.")
+        else:
+            if isinstance(player.user, DebugUser):
+                playerString = player.user.name
+            else:
+                playerString = "<@" + str(player.user.id) + ">"
+            await self.channel.send(playerString + " voted.")
 
     def checkAction(self, actingUser):
         if not self.running:
             return False, "Game hasn't started yet."
 
-        if actingUser in self.deadPlayers:
-            return False, "You are dead and cannot act."
-        player = self.players.get(actingUser)
+        player = self.getPlayerFromUser(actingUser)
         if not player:
             return False, "You are not a player in this game."
 
@@ -184,19 +222,25 @@ class Game:
         if whichAbility != 1 and whichAbility != 2:
             return False, f"Invalid ability number {whichAbility}. Please choose ability 1 or 2."
 
-        targetPlayers = []
-        for target in targets:
-            if not target:
-                continue
-            if target in self.deadPlayers:
-                return False, f"{target.name} is dead and cannot be targeted."
-            targetPlayer = self.players.get(target)
-            if not targetPlayer:
-                return False, f"{target.name} is not a player in this game."
-            targetPlayers.append(targetPlayer)
+        player = self.getPlayerFromUser(actingUser)
 
-        player = self.players.get(actingUser)
-        succeeded, message = player.doAbility(whichAbility, targetPlayers)
+        # If dead, vote for lich ability
+        if player in self.deadPlayers.values() and self.lich:
+            succeeded, message = self.lich.vote(player, whichAbility)
+        else:
+            # If alive, use own ability
+            targetPlayers = []
+            for target in targets:
+                if not target:
+                    continue
+                if target in self.deadPlayers.values():
+                    return False, f"{target.name} is dead and cannot be targeted."
+                targetPlayer = self.players.get(target)
+                if not targetPlayer:
+                    return False, f"{target.name} is not a player in this game."
+                targetPlayers.append(targetPlayer)
+            succeeded, message = player.doAbility(whichAbility, targetPlayers)
+
         if succeeded:
             self.playersActedThisTurn.add(player)
             await self.printEnteredAction(player)
@@ -207,7 +251,7 @@ class Game:
         if not passed:
             return False, message
 
-        player = self.players.get(actingUser)
+        player = self.getPlayerFromUser(actingUser)
         player.activeAbilities = []
         self.playersActedThisTurn.add(player)
         await self.printEnteredAction(player)
@@ -216,8 +260,10 @@ class Game:
     def doEvent(self, event):
         event.beginEvent()
 
-        players = self.getPlayers()
+        players = self.getLivingPlayers()
         abilities = []
+        if self.lich and self.lich.chosenAbility:
+            abilities.append(self.lich.chosenAbility)
         for player in players:
             abilities.extend(player.getAllActiveAbilities())
         effects = []
@@ -249,6 +295,15 @@ class Game:
         event.endEvent()
 
     async def printActions(self):
+        if self.lich:
+            if self.lich.chosenAbility:
+                message = "The " + Lich.icon() + "Lich used ability **"
+                message += self.lich.chosenAbility.abilityName() + "**: "
+                message += self.lich.chosenAbility.abilityDescription()
+                await self.channel.send(message)
+            else:
+                await self.channel.send("The " + Lich.icon() + "Lich had a draw and skipped its turn")
+
         for player in self.getPlayersSortedByTeam():
             ability = player.activeAbilityLastTurn
             if ability:
@@ -264,14 +319,16 @@ class Game:
     async def printHealths(self, doDrinks=True):
         for player in self.getPlayersSortedByTeam():
             playerString = player.toString()
-            damageMsg = playerString + " took " + str(player.damageTakenLastTurn) + " damage"
+            damageMsg = playerString
+            if doDrinks:
+                damageMsg += " took " + str(player.damageTakenLastTurn) + " damage"
             await self.channel.send(damageMsg)
             if not player.alive:
                 deathMsg = playerString + " **died!**"
                 await self.channel.send(deathMsg)
 
-    def getPlayers(self):
+    def getLivingPlayers(self):
         return list(self.players.values())
 
     def getPlayersSortedByTeam(self):
-        return sorted(self.getPlayers(), key=lambda p: p.team.value if p.team else "")
+        return sorted(self.getLivingPlayers(), key=lambda p: p.team.value if p.team else "")

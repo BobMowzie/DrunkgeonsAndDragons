@@ -83,7 +83,7 @@ class Omnislash(AbilityBase):
         return 0
 
     def dealDamage(self, event):
-        for player in self.game.getPlayers():
+        for player in self.game.getLivingPlayers():
             if player == self:
                 continue
             marks = [effect for effect in player.getAllEffectsOfType(MarkedEffect) if effect.caster == self.caster]

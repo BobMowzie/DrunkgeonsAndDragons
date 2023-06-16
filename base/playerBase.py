@@ -1,5 +1,6 @@
 from abc import abstractmethod
 
+from debug.debugUser import DebugUser
 from game.damageInstance import DamageInstance
 from game.gameEvents import *
 import math
@@ -109,7 +110,7 @@ class PlayerBase(EventSubscriber):
     def adjustDealDamage(self, event):
         if event.damageInstance.attacker == self:
             event.damageInstance.newAmount = max(0, event.damageInstance.amount + self.dealDamageAddition)
-            event.damageInstance.newAmount = math.floor(event.damageInstance.amount * self.dealDamageMultiplier)
+            event.damageInstance.newAmount = math.floor(event.damageInstance.newAmount * self.dealDamageMultiplier)
 
     def dealDamage(self, target, amount, source=None):
         damageInstance = DamageInstance(self, target, amount, source)
@@ -124,7 +125,7 @@ class PlayerBase(EventSubscriber):
     def adjustTakeDamage(self, event):
         if event.damageInstance.target == self:
             event.damageInstance.newAmount = max(0, event.damageInstance.amount + self.takeDamageAddition)
-            event.damageInstance.newAmount = math.floor(event.damageInstance.amount * self.takeDamageMultiplier)
+            event.damageInstance.newAmount = math.floor(event.damageInstance.newAmount * self.takeDamageMultiplier)
 
     def takeDamage(self, event):
         self.damageTaken.sort(key=lambda di: di.amount)
@@ -137,9 +138,13 @@ class PlayerBase(EventSubscriber):
                 self.health -= amount
                 self.damageTakenThisTurn += amount
                 if self.health <= 0:
-                    self.health = 0
-                    self.alive = False
-                    self.game.deadPlayers.append(self.user)
+                    self.die()
+
+    def die(self):
+        self.health = 0
+        self.alive = False
+        self.activeEffects.clear()
+        self.game.deadPlayers[self.user] = self
 
     def resetPlayer(self):
         self.modifiedAbilitiesLastTurn = self.modifiedAbilities
@@ -203,7 +208,10 @@ class PlayerBase(EventSubscriber):
             heart = self.team.value
         toReturn += heart
         toReturn += toSub(str(self.health))
-        toReturn += "<@" + str(self.user.id) + "> "
+        if isinstance(self.user, DebugUser):
+            toReturn += self.user.name
+        else:
+            toReturn += "<@" + str(self.user.id) + "> "
         for effect in self.activeEffects:
             toReturn += effect.effectEmoji()
             if effect.hasTurnsRemaining:

@@ -1,3 +1,5 @@
+from math import ceil
+
 from base.playerBase import PlayerBase
 from base.abilityBase import AbilityBase
 from base.effectBase import EffectBase
@@ -27,7 +29,7 @@ class Warlock(PlayerBase):
 
     @classmethod
     def ability2(cls):
-        return Soulbind
+        return Soullink
 
 
 #######################################
@@ -53,7 +55,7 @@ class EldritchBlast(AbilityBase):
         self.caster.dealDamage(self.caster, 1)
 
 
-class Soulbind(AbilityBase):
+class Soullink(AbilityBase):
     def __init__(self, caster: Warlock, targets):
         AbilityBase.__init__(self, caster, targets)
 
@@ -61,11 +63,11 @@ class Soulbind(AbilityBase):
 
     @classmethod
     def abilityName(cls):
-        return "Soulbind"
+        return "Soullink"
 
     @classmethod
     def abilityDescription(cls):
-        return 'Souldbind (👻) to a target for 2 turns. Whenever you are dealt damage, they are dealt that damage too.'
+        return 'Soullink (⛓️) to a target for 2 turns. Whenever you are dealt damage, they are dealt half of that damage too (rounded up).'
 
     def applyEffects(self, events):
         target = self.targets[0]
@@ -87,11 +89,11 @@ class SoulboundEffect(EffectBase):
 
     @classmethod
     def effectName(cls):
-        return "Soulbound"
+        return "Soullink"
 
     @classmethod
     def effectEmoji(cls):
-        return '👻'
+        return '⛓️'
 
     def dealDamageEvent(self, event):
         damageInstance = event.damageInstance
@@ -99,4 +101,4 @@ class SoulboundEffect(EffectBase):
                 and damageInstance.target.soulboundEffect == self\
                 and not isinstance(damageInstance.source, SoulboundEffect)\
                 and not damageInstance.canceled:
-            self.caster.dealDamage(self.target, damageInstance.amount, self)
+            self.caster.dealDamage(self.target, ceil(damageInstance.amount / 2.0), self)

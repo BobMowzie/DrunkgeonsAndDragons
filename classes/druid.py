@@ -63,7 +63,7 @@ class Druid(PlayerBase):
 
     def endTurns(self, event):
         self.targetedByCount = 0
-        for player in self.game.getPlayers():
+        for player in self.game.getLivingPlayers():
             for action in player.getAllActiveAbilities():
                 if action and self in action.targets:
                     self.targetedByCount += 1
@@ -218,7 +218,7 @@ class ThornskinEffect(EffectBase):
         return '🌵'
 
     def dealDamage(self, event):
-        for player in self.game.getPlayers():
+        for player in self.game.getLivingPlayers():
             if player == self.caster:
                 continue
             for action in player.getAllActiveAbilities():
