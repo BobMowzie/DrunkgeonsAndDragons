@@ -49,6 +49,7 @@ class Wizard(PlayerBase):
 class Fireball(AbilityBase):
     def __init__(self, caster: Wizard, targets):
         AbilityBase.__init__(self, caster, targets)
+        self.damageDealt = 0
 
         self.subscribeEvent(PhaseDealDamage, self.damageEffect, 0)
 
@@ -63,12 +64,18 @@ class Fireball(AbilityBase):
     def damageEffect(self, event):
         target = self.targets[0]
         self.caster.dealDamage(target, self.caster.power, self)
+        self.damageDealt = self.caster.power
         self.caster.power = 1
+
+    def actionText(self):
+        return f"dealing {self.damageDealt} damage"
 
 
 class Incinerate(AbilityBase):
     def __init__(self, caster: Wizard, targets):
         AbilityBase.__init__(self, caster, targets)
+
+        self.numTurns = 0
 
         self.subscribeEvent(PhaseApplyEffects, self.applyEffects, 0)
 
@@ -83,7 +90,14 @@ class Incinerate(AbilityBase):
     def applyEffects(self, event):
         target = self.targets[0]
         target.addEffect(BurnEffect(self.caster, target, self.caster.power))
+        self.numTurns = self.caster.power
         self.caster.power = 1
+
+    def actionText(self):
+        toReturn = f"burning (🔥) them for {self.numTurns} turn"
+        if self.numTurns > 1:
+            toReturn += "s"
+        return toReturn
 
 
 #######################################

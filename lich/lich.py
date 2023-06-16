@@ -190,5 +190,24 @@ class Enigma(AbilityBase):
                 player.activeAbility = newAbility
 
 
-lichAbilities = [Excruciate, Eternity, Enfeeble, Empower, Explosion, Enigma]
+class Expel(AbilityBase):
+    def __init__(self, caster):
+        AbilityBase.__init__(self, caster, None)
+
+        self.subscribeEvent(PhaseStartTurns, self.removeEffects, -98)
+
+    @classmethod
+    def abilityName(cls):
+        return "Expel"
+
+    @classmethod
+    def abilityDescription(cls):
+        return "Clear all status effects."
+
+    def removeEffects(self, event):
+        for player in self.game.players.values():
+            player.activeEffects.clear()
+
+
+lichAbilities = [Excruciate, Eternity, Enfeeble, Empower, Explosion, Enigma, Expel]
 

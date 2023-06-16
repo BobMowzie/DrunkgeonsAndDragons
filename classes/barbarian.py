@@ -48,6 +48,8 @@ class Strike(AbilityBase):
     def __init__(self, caster: Barbarian, targets):
         AbilityBase.__init__(self, caster, targets)
 
+        self.damageDealt = 0
+
         self.subscribeEvent(PhaseDealDamage, self.damageEffect, 0)
         self.subscribeEvent(PhasePostDamage, self.postEffect, 0)
 
@@ -67,6 +69,7 @@ class Strike(AbilityBase):
             self.caster.consecutiveDamageBonus = 0
 
         self.caster.dealDamage(target, 1 + self.caster.consecutiveDamageBonus, self)
+        self.damageDealt = 1 + self.caster.consecutiveDamageBonus
 
     def postEffect(self, event):
         consecutiveHit = False
@@ -80,6 +83,9 @@ class Strike(AbilityBase):
         else:
             self.caster.consecutiveDamageBonus = 0
             self.caster.previousTarget = None
+
+    def actionText(self):
+        return f"dealing {self.damageDealt} damage"
 
 
 class Enrage(AbilityBase):
@@ -113,6 +119,9 @@ class Enrage(AbilityBase):
     @classmethod
     def canSelfTarget(cls):
         return True
+
+    def actionText(self):
+        return "enraging (💢) them to deal double damage for 3 turns"
 
 
 #######################################

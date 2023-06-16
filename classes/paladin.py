@@ -83,10 +83,14 @@ class Shield(AbilityBase):
     def canSelfTarget(cls):
         return True
 
+    def actionText(self):
+        return f"taking all damage for them this turn but halved"
+
 
 class Retribution(AbilityBase):
     def __init__(self, caster: Paladin, targets):
         AbilityBase.__init__(self, caster, targets)
+        self.damageDealt = 0
 
         self.subscribeEvent(PhaseDealDamage, self.damageEffect, 0)
 
@@ -101,3 +105,7 @@ class Retribution(AbilityBase):
     def damageEffect(self, event):
         target = self.targets[0]
         self.caster.dealDamage(target, self.caster.biggestAttackLastTurn + 1, self)
+        self.damageDealt = self.caster.biggestAttackLastTurn + 1
+
+    def actionText(self):
+        return f"dealing {self.damageDealt} damage"

@@ -59,6 +59,9 @@ class Dualslash(AbilityBase):
         self.caster.dealDamage(target, 1, self)
         self.caster.dealDamage(target, 1, self)
 
+    def actionText(self):
+        return f"dealing 1 damage twice"
+
 
 class Omnislash(AbilityBase):
     def __init__(self, caster: Blademaster, targets):
@@ -91,6 +94,9 @@ class Omnislash(AbilityBase):
                 self.caster.dealDamage(player, 2, self)
                 for effect in marks:
                     player.removeEffectInstance(effect)
+
+    def actionText(self):
+        return f"dealing 1 damage to all marked players"
 
 #######################################
 # Effects

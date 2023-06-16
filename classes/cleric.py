@@ -71,10 +71,14 @@ class Cure(AbilityBase):
     def canSelfTarget(cls):
         return True
 
+    def actionText(self):
+        return "clearing all of their status effects"
+
 
 class DivineBarrier(AbilityBase):
     def __init__(self, caster: Cleric, targets):
         AbilityBase.__init__(self, caster, targets)
+        self.numBarriers = 0
 
         self.subscribeEvent(PhaseApplyEffects, self.applyEffects, 0)
 
@@ -89,6 +93,7 @@ class DivineBarrier(AbilityBase):
     def applyEffects(self, event):
         target = self.targets[0]
         newBarrier = DivineBarrierEffect(self.caster, target, self.caster.blessings)
+        self.numBarriers = self.caster.blessings
         self.caster.blessings = 1
 
         oldBarrier = target.getEffect(DivineBarrierEffect)
@@ -102,6 +107,9 @@ class DivineBarrier(AbilityBase):
     @classmethod
     def canSelfTarget(cls):
         return True
+
+    def actionText(self):
+        return f"creating a Divine Barrier (✝️) that blocks {self.numBarriers} hits of damage"
 
 
 #######################################

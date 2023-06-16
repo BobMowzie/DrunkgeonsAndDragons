@@ -54,6 +54,9 @@ class EldritchBlast(AbilityBase):
         self.caster.dealDamage(target, 3)
         self.caster.dealDamage(self.caster, 1)
 
+    def actionText(self):
+        return f"dealing 3 damage to them and 1 damage to themselves"
+
 
 class Soullink(AbilityBase):
     def __init__(self, caster: Warlock, targets):
@@ -76,6 +79,9 @@ class Soullink(AbilityBase):
             soulboundEffect.target.removeEffectInstance(soulboundEffect)
         self.caster.soulboundEffect = SoulboundEffect(self.caster, target, 2)
         target.addEffect(self.caster.soulboundEffect)
+
+    def actionText(self):
+        return f"linking (⛓️) incoming damage to them for 2 turns"
 
 
 #######################################

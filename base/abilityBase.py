@@ -19,6 +19,9 @@ class AbilityBase(EventSubscriber):
     def abilityDescription(cls):
         return ''
 
+    def actionText(self):
+        return ''
+
     def canUse(self):
         numTargets = len(self.targets)
         if numTargets > self.maxNumTargets():

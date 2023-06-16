@@ -104,10 +104,10 @@ class Game:
             self.doEvent(phase)
 
         #DEBUG
-        if self.turns == 2:
-            list(self.players.values())[0].die()
-            list(self.players.values())[1].die()
-            list(self.players.values())[2].die()
+        # if self.turns == 2:
+        #     list(self.players.values())[0].die()
+        #     list(self.players.values())[1].die()
+        #     list(self.players.values())[2].die()
 
         for player in self.getLivingPlayers():
             player.resetPlayer()
@@ -302,7 +302,7 @@ class Game:
                 message += self.lich.chosenAbility.abilityDescription()
                 await self.channel.send(message)
             else:
-                await self.channel.send("The " + Lich.icon() + "Lich had a draw and skipped its turn")
+                await self.channel.send("The " + Lich.icon() + "Lich had a draw and skipped their turn")
 
         for player in self.getPlayersSortedByTeam():
             ability = player.activeAbilityLastTurn
@@ -311,6 +311,10 @@ class Game:
                 if len(ability.targets) > 0:
                     targetsString = ", ".join([target.toString() for target in ability.targets])
                     message += " on " + targetsString
+                actionText = ability.actionText()
+                if actionText != '':
+                    message += ", " + actionText
+                message += "."
                 await self.channel.send(message)
 
             else:

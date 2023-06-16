@@ -78,6 +78,7 @@ class Druid(PlayerBase):
 class Bite(AbilityBase):
     def __init__(self, caster: Druid, targets):
         AbilityBase.__init__(self, caster, targets)
+        self.damageDealt = 0
 
         self.subscribeEvent(PhaseDealDamage, self.damageEffect, 0)
 
@@ -94,6 +95,10 @@ class Bite(AbilityBase):
         if self.caster.targetedByCount == 0:
             bonusDamage = 2
         self.caster.dealDamage(self.targets[0], 1 + bonusDamage)
+        self.damageDealt = 1 + bonusDamage
+
+    def actionText(self):
+        return f"dealing {self.damageDealt} damage"
 
 
 class EntanglingVines(AbilityBase):
@@ -119,10 +124,15 @@ class EntanglingVines(AbilityBase):
         self.targets[0].removeEffect(EntangledEffect)
         self.targets[0].addEffect(EntangledEffect(self.caster, self.targets[0], 2))
 
+    def actionText(self):
+        return f"entangling (🌿) them and making them skip their next turn"
+
 
 class Maul(AbilityBase):
     def __init__(self, caster: Druid, targets):
         AbilityBase.__init__(self, caster, targets)
+
+        self.damageDealt = 0
 
         self.subscribeEvent(PhaseModifyActions, self.modifyActions, 0)
         self.subscribeEvent(PhaseModifyActions, self.cancelActiveAbility, 1)
@@ -138,9 +148,10 @@ class Maul(AbilityBase):
 
     def modifyActions(self, event):
         target = self.targets[0]
-        abilityCopy = copy.copy(target.activeAbility)
-        abilityCopy.targets = [self.caster]
-        target.modifiedAbilities.append(abilityCopy)
+        if target.activeAbility:
+            abilityCopy = copy.copy(target.activeAbility)
+            abilityCopy.targets = [self.caster]
+            target.modifiedAbilities.append(abilityCopy)
 
     # Cancel active ability only after all Maul abilities have copied it
     def cancelActiveAbility(self, event):
@@ -150,6 +161,10 @@ class Maul(AbilityBase):
     def damageEffect(self, event):
         targetCount = self.caster.targetedByCount
         self.caster.dealDamage(self.targets[0], targetCount)
+        self.damageDealt = targetCount
+
+    def actionText(self):
+        return f"retargeting their ability and dealing {self.damageDealt} damage"
 
 
 class Thornskin(AbilityBase):
@@ -175,6 +190,9 @@ class Thornskin(AbilityBase):
     @classmethod
     def canSelfTarget(cls):
         return True
+
+    def actionText(self):
+        return "growing thorns (🌵) on them for 2 turns that deal 1 damage to those who target them"
 
 
 #######################################
