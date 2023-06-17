@@ -48,11 +48,11 @@ class Potion(AbilityBase):
 
     @classmethod
     def abilityDescription(cls):
-        return 'Clear all status effects from a target. Deal 2 damage to the target for each status effect cleared.'
+        return 'Clear all status effects from a target. Deal 1 damage to the target, plus 2 damage for each status effect cleared.'
 
     def countEffects(self, event):
         target = self.targets[0]
-        self.damageDealt += len(target.activeEffects) * 2
+        self.damageDealt += 1 + len(target.activeEffects) * 2
 
     def removeEffects(self, event):
         target = self.targets[0]
