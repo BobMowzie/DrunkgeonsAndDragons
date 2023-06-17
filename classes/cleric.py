@@ -19,7 +19,7 @@ class Cleric(PlayerBase):
 
     @classmethod
     def classDescription(cls):
-        return "Support class. Purely defensive. Cleanses status effects from both allies and enemies to gain blessings for Divine Barriers."
+        return "Purely defensive support class. Cleanses status effects from both allies and enemies to gain blessings for Divine Barriers."
 
     @classmethod
     def ability1(cls):
@@ -53,6 +53,7 @@ class Cure(AbilityBase):
     def abilityDescription(cls):
         return "Clear all status effects (harmful and beneficial) from a target and prevent the target from receiving any new status effects this turn. Each effect cleansed grants one blessing to the Cleric."
 
+    # If a cleric is affected by Entangle or other skip your turn effects, what happens?
     def countBlessings(self, event):
         target = self.targets[0]
         self.caster.blessings += len(target.activeEffects)
@@ -63,7 +64,7 @@ class Cure(AbilityBase):
 
     def applyEffectsEvent(self, event):
         target = self.targets[0]
-        if event.target == target and not event.canceled:
+        if event.target == target:
             event.newCanceled = True
             self.caster.blessings += 1
 

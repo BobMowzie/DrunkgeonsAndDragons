@@ -3,7 +3,7 @@ from collections import Counter
 
 from base.abilityBase import AbilityBase
 from game.damageInstance import DamageInstance
-from game.gameEvents import PhaseStartTurns, PhaseDealDamage, EventDealDamage, PhaseModifyActions
+from game.gameEvents import PhaseStartTurns, PhaseDealDamage, EventDealDamage, PhaseModifyActions, EventApplyEffect
 
 numOptions = 2
 
@@ -195,6 +195,7 @@ class Expel(AbilityBase):
         AbilityBase.__init__(self, caster, None)
 
         self.subscribeEvent(PhaseStartTurns, self.removeEffects, -98)
+        self.subscribeEvent(EventApplyEffect, self.applyEffectsEvent, 0)
 
     @classmethod
     def abilityName(cls):
@@ -207,6 +208,9 @@ class Expel(AbilityBase):
     def removeEffects(self, event):
         for player in self.game.players.values():
             player.activeEffects.clear()
+
+    def applyEffectsEvent(self, event):
+        event.newCanceled = True
 
 
 lichAbilities = [Excruciate, Eternity, Enfeeble, Empower, Explosion, Enigma, Expel]

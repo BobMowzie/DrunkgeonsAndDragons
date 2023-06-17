@@ -229,6 +229,7 @@ from classes.cleric import Cleric
 from classes.druid import Druid
 from classes.warlock import Warlock
 from classes.blademaster import Blademaster
+from classes.witch import Witch
 
 classEmojis = {
     Barbarian.classEmoji(): Barbarian,
@@ -237,7 +238,8 @@ classEmojis = {
     Cleric.classEmoji(): Cleric,
     Druid.classEmoji(): Druid,
     Warlock.classEmoji(): Warlock,
-    Blademaster.classEmoji(): Blademaster
+    Blademaster.classEmoji(): Blademaster,
+    Witch.classEmoji(): Witch
 }
 
 classNames = {
@@ -247,5 +249,6 @@ classNames = {
     Cleric.className(): Cleric,
     Druid.className(): Druid,
     Warlock.className(): Warlock,
-    Blademaster.className(): Blademaster
+    Blademaster.className(): Blademaster,
+    Witch.className(): Witch
 }

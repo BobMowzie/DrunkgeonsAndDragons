@@ -156,7 +156,8 @@ class Maul(AbilityBase):
     # Cancel active ability only after all Maul abilities have copied it
     def cancelActiveAbility(self, event):
         target = self.targets[0]
-        target.activeAbility.canceled = True
+        if target.activeAbility:
+            target.activeAbility.canceled = True
 
     def damageEffect(self, event):
         targetCount = self.caster.targetedByCount
