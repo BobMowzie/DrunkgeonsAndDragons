@@ -214,7 +214,8 @@ async def allInfo(interaction: discord.Interaction):
     if interaction.user.guild_permissions.administrator:
         await interaction.response.send_message("Printing all info", ephemeral=True)
         await doAllInfo(interaction.channel)
-    await interaction.response.send_message("Only administrators can use this command", ephemeral=True)
+    else:
+        await interaction.response.send_message("Only administrators can use this command", ephemeral=True)
 
 
 async def respondToAction(interaction: discord.Interaction, succeeded, message):
