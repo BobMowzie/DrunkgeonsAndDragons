@@ -27,7 +27,7 @@ class MyClient(discord.Client):
             await tree.sync(guild=None)
             self.synced = True
         print(f"Logged in as {self.user}")
-        await debugGame()
+        # await debugGame()
 
 
 client = MyClient()

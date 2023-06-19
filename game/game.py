@@ -12,7 +12,7 @@ class Game:
     """A running instance of the game"""
 
     def __init__(self, channel):
-        self.maxTurnLength = 20
+        self.maxTurnLength = 90
 
         self.channel = channel
         self.players = {}
