@@ -91,8 +91,8 @@ class Game:
             self.lich.chooseAbility()
 
         phases = [
-            PhaseStartTurns(self),
             PhaseModifyActions(self),
+            PhaseStartTurns(self),
             PhaseApplyEffects(self),
             PhasePreDamage(self),
             PhaseDealDamage(self),

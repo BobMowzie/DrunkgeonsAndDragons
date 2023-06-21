@@ -10,7 +10,7 @@ class Barbarian(PlayerBase):
         self.previousTarget = None
         self.consecutiveDamageBonus = 0
 
-        self.subscribeEvent(PhaseStartTurns, self.startTurnEvent, 0)
+        self.subscribeEvent(PhasePostDamage, self.postEffect, 0)
 
     @classmethod
     def className(cls):
@@ -22,7 +22,7 @@ class Barbarian(PlayerBase):
 
     @classmethod
     def classDescription(cls):
-        return "Bruiser and bully class. Purely offensive."
+        return "Bruiser and bully class that likes to focus on single targets. Purely offensive."
 
     @classmethod
     def ability1(cls):
@@ -32,10 +32,24 @@ class Barbarian(PlayerBase):
     def ability2(cls):
         return Enrage
 
-    def startTurnEvent(self, event):
-        if not self.activeAbility:
-            self.previousTarget = None
-            self.consecutiveDamageBonus = 0
+    def postEffect(self, event):
+        consecutiveHit = False
+        for damageInstance in self.previousTarget.damageTaken:
+            if damageInstance.attacker == self and damageInstance.amount > 0 and not damageInstance.canceled and isinstance(damageInstance.source, Strike):
+                consecutiveHit = True
+                break
+
+        if consecutiveHit:
+            self.consecutiveDamageBonus = min(self.consecutiveDamageBonus + 1, 2)
+        else:
+            didEnrage = False
+            for ability in self.getAllActiveAbilities():
+                if isinstance(ability, Enrage):
+                    didEnrage = True
+                    break
+            if not didEnrage:
+                self.consecutiveDamageBonus = 0
+                self.previousTarget = None
 
     def resourceNumber(self):
         return self.consecutiveDamageBonus
@@ -51,7 +65,6 @@ class Strike(AbilityBase):
         self.damageDealt = 0
 
         self.subscribeEvent(PhaseDealDamage, self.damageEffect, 0)
-        self.subscribeEvent(PhasePostDamage, self.postEffect, 0)
 
     @classmethod
     def abilityName(cls):
@@ -70,19 +83,6 @@ class Strike(AbilityBase):
 
         self.caster.dealDamage(target, 1 + self.caster.consecutiveDamageBonus, self)
         self.damageDealt = 1 + self.caster.consecutiveDamageBonus
-
-    def postEffect(self, event):
-        consecutiveHit = False
-        for damageInstance in self.caster.previousTarget.damageTaken:
-            if damageInstance.attacker == self.caster and damageInstance.amount > 0 and not damageInstance.canceled:
-                consecutiveHit = True
-                break
-
-        if consecutiveHit:
-            self.caster.consecutiveDamageBonus = min(self.caster.consecutiveDamageBonus + 1, 2)
-        else:
-            self.caster.consecutiveDamageBonus = 0
-            self.caster.previousTarget = None
 
     def actionText(self):
         return f"dealing {self.damageDealt} damage"
